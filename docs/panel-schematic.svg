@@ -1,0 +1,60 @@
+<svg width="1120" height="640" viewBox="0 0 1120 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schematic of the dsh-reakit settings panel">
+  <title>dsh-reakit settings panel (schematic)</title>
+  <desc>A hand-drawn schematic of the REA settings panel: tool switch, model-call guidance, and the collapsed runtime version and optional tool setup sections. It contains no real user interface state.</desc>
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FBFCFD"/>
+    </linearGradient>
+    <style>
+      .t { font-family: -apple-system, "Helvetica Neue", "PingFang SC", sans-serif; }
+      .h1 { font-size: 19px; font-weight: 650; fill: #1B1F26; }
+      .sub { font-size: 13px; fill: #6B7280; }
+      .h2 { font-size: 14px; font-weight: 620; fill: #1B1F26; }
+      .body { font-size: 12.5px; fill: #4B5563; }
+      .muted { font-size: 12px; fill: #8A919C; }
+      .chip { font-size: 12px; font-weight: 600; fill: #22A06B; }
+      .pill { font-size: 12.5px; font-weight: 600; fill: #166534; }
+    </style>
+  </defs>
+
+  <rect x="0.5" y="0.5" width="1119" height="639" rx="14" fill="url(#card)" stroke="#E5E7EB"/>
+
+  <text class="t h1" x="44" y="58">REA settings</text>
+  <text class="t sub" x="44" y="82">Tool wiring, model calls and on-demand setup</text>
+  <rect x="966" y="42" width="110" height="30" rx="15" fill="#EAF7F0"/>
+  <text class="t chip" x="994" y="62">● Ready</text>
+
+  <line x1="44" y1="106" x2="1076" y2="106" stroke="#EEF0F3"/>
+
+  <rect x="44" y="128" width="1032" height="150" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t h2" x="68" y="162">REA tool switch</text>
+  <text class="t body" x="68" y="186">Shared with the REA button in the composer; one global state.</text>
+  <rect x="980" y="142" width="72" height="28" rx="14" fill="#EAF7F0"/>
+  <text class="t pill" x="999" y="161">On</text>
+
+  <rect x="68" y="206" width="480" height="52" rx="9" fill="#F7F8FA"/>
+  <text class="t body" x="84" y="228" style="font-weight:600;fill:#1B1F26">When on</text>
+  <text class="t muted" x="84" y="246">229 tools are exposed to the model.</text>
+  <rect x="568" y="206" width="484" height="52" rx="9" fill="#F7F8FA"/>
+  <text class="t body" x="584" y="228" style="font-weight:600;fill:#1B1F26">When off</text>
+  <text class="t muted" x="584" y="246">Tools are removed; the runtime is kept.</text>
+
+  <rect x="44" y="296" width="1032" height="86" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <rect x="44" y="296" width="4" height="86" rx="2" fill="#22A06B"/>
+  <text class="t h2" x="68" y="326">Model call guidance</text>
+  <text class="t body" x="68" y="350">If a schema-size error blocks a model call, temporarily disable REA and retry.</text>
+  <text class="t muted" x="68" y="370">Kimi / Moonshot schema caveat · DeepSeek strict · OpenAI strict subsets</text>
+
+  <rect x="44" y="400" width="1032" height="60" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t body" x="68" y="436" style="font-weight:600;fill:#1B1F26">▸  Runtime version</text>
+  <text class="t muted" x="250" y="436">no auto-upgrade · explicit check only</text>
+
+  <rect x="44" y="472" width="1032" height="60" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t body" x="68" y="508" style="font-weight:600;fill:#1B1F26">▸  Optional tool setup</text>
+  <text class="t muted" x="252" y="508">optional · copy a scoped AI prompt</text>
+
+  <text class="t muted" x="44" y="592">Operators never leave your machine until you open one of these sections.</text>
+
+  <rect x="44" y="604" width="1032" height="1" fill="#F1F3F5"/>
+</svg>

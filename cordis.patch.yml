@@ -1,0 +1,7 @@
+# Installation enables the complete catalog and prepares an isolated pinned runtime.
+- insert:
+    - id: rea
+      name: dsh-reakit
+      config:
+        enabled: true
+        autoSetup: true

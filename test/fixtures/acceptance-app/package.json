@@ -1,0 +1,7 @@
+{
+  "name": "rea-acceptance-sample",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "main.js",
+  "private": true
+}

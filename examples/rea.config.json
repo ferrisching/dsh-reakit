@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "autoSetup": true,
+  "runtimeDir": "",
+  "setupTimeoutMs": 600000,
+  "nodePath": "",
+  "reaEntry": "",
+  "serverName": "rea",
+  "inputSchemaProfile": "compact",
+  "outputSchemaProfile": "off",
+  "toolCallTimeoutMs": 450000,
+  "env": {}
+}

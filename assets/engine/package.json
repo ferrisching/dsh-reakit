@@ -1,0 +1,9 @@
+{
+  "name": "dsh-rea-local-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Isolated REA engine installation; never publish this directory",
+  "dependencies": {
+    "rea-agents": "6.8.0"
+  }
+}

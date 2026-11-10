@@ -1,0 +1,17 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="dsh-reakit">
+  <defs>
+    <linearGradient id="reakit-bg" x1="4" y1="3" x2="32" y2="33" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B3A55"/>
+      <stop offset="1" stop-color="#101722"/>
+    </linearGradient>
+    <linearGradient id="reakit-accent" x1="8" y1="8" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4ED1A1"/>
+      <stop offset="1" stop-color="#22A06B"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="34" height="34" rx="9" fill="url(#reakit-bg)"/>
+  <rect x="1.5" y="1.5" width="33" height="33" rx="8.5" stroke="#FFFFFF" stroke-opacity="0.14"/>
+  <path d="M10 13.5 14.2 18 10 22.5" stroke="url(#reakit-accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16.4 22.5H25" stroke="#E8EDF6" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="25.4" cy="10.6" r="2.4" fill="url(#reakit-accent)"/>
+</svg>

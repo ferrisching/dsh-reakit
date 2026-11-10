@@ -1,0 +1,102 @@
+{
+  "name": "dsh-reakit",
+  "version": "0.1.0",
+  "description": "Batteries-included REA integration for DeepSeek Harness: a managed Node and REA runtime, one-switch tool exposure, a live composer status indicator, on-demand optional tool setup, and in-place runtime upgrades with rollback.",
+  "type": "module",
+  "license": "MIT",
+  "author": "yunfeicheng",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./config": "./lib/config.js",
+    "./bootstrap": "./lib/bootstrap.js",
+    "./client": "./client/client.js",
+    "./icon.svg": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-reakit": "./bin/dsh-reakit.mjs"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "client",
+    "assets/engine/package.json",
+    "assets/engine/dependencies.lock.json",
+    "cordis.patch.yml",
+    "examples",
+    "docs/ACCEPTANCE.md",
+    "icon.svg",
+    "README.md",
+    "README_zh.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs/panel-schematic.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=22",
+    "dsh": "0.2.2-rc.1"
+  },
+  "scripts": {
+    "test": "node --test --test-timeout=20000 test/*.test.mjs",
+    "check": "node --check lib/index.js && node --check lib/config.js && node --check lib/bootstrap.js && node --check lib/components.js && node --check lib/components-host.js && node --check lib/optional-tools.js lib/existing-rea.js lib/runtime-split.js lib/node-install.js lib/setup-errors.js lib/node-mirror.js lib/node-dist.js && node --check lib/rea-tool-names.js && node --check lib/runtime-versions.js && node --check lib/runtime-manager.js && node --check client/client.js && node --check bin/dsh-reakit.mjs && npm test",
+    "doctor": "node bin/dsh-reakit.mjs doctor",
+    "pack:check": "npm pack --dry-run --ignore-scripts"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "cordis-plugin",
+    "mcp",
+    "rea",
+    "reverse-engineering",
+    "binary-analysis",
+    "ghidra",
+    "managed-runtime",
+    "ai-setup"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.1.0",
+    "@deepseek-ai/dsh-mcp-client": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.1",
+    "@deepseek-ai/schemastery": "~3.19.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.1.0",
+    "@deepseek-ai/dsh-mcp-client": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.1",
+    "@deepseek-ai/schemastery": "3.19.0"
+  },
+  "dependencies": {
+    "semver": "7.7.3"
+  },
+  "icon": "./icon.svg",
+  "homepage": "https://github.com/ferrisching/dsh-reakit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ferrisching/dsh-reakit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ferrisching/dsh-reakit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
