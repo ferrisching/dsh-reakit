@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { createRuntimeVersionManager } from '../lib/runtime-manager.js'
+import { REA_NODE_RANGE as RANGE } from '../lib/config.js'
 import { buildMcpConfig, REA_NODE_RANGE } from '../lib/config.js'
 
 const CONFIRM = { confirmed: true, exported: true }
@@ -34,6 +35,7 @@ async function fixture(t, overrides = {}) {
   const manager = createRuntimeVersionManager({
     ctx, configuration, getRuntimeState: () => runtime,
     check: async () => { calls.check++; return { candidate, updateAvailable: true, reaUpdateAvailable: true, nodeUpdateAvailable: true } },
+    candidateFrom: async ({ reaVersion, nodeVersion }) => ({ platform: process.platform, arch: process.arch, rea: { version: reaVersion, nodeRange: '>=24.22.1' }, node: { version: String(nodeVersion).replace(/^v/, '') } }),
     prepare: async (_candidate, settings) => {
       calls.prepare++
       const nodePath = join(settings.runtimeDir, 'new', 'node'), reaEntry = join(settings.runtimeDir, 'new', 'engine', 'node_modules', 'rea-agents', 'scripts', 'rea.mjs')
@@ -41,7 +43,7 @@ async function fixture(t, overrides = {}) {
     },
   })
   await manager.refresh()
-  return { root, manager, calls, writes, configuration, getCurrent: () => current, getRuntime: () => runtime,
+  return { root, manager, calls, writes, configuration, getCurrent: () => current, setCurrent: value => { current = value }, getRuntime: () => runtime,
     setRuntime: value => { runtime = value },
     failWrites: count => { failWrites = count }, applyThenFail: () => { applyThenFail = true },
     setSession: value => { sessionResult = value },
@@ -184,3 +186,34 @@ test('managed parts cover split and legacy layouts', async () => {
 })
 
 
+
+test('rolling back reinstalls a deleted previous version', async t => {
+  const f = await fixture(t)
+  const root = f.root
+  const oldNode = join(root, 'node', 'old-node')
+  const oldEngine = join(root, 'engine', 'old-engine')
+  const newNode = join(root, 'node', 'new-node')
+  const newEngine = join(root, 'engine', 'new-engine')
+  for (const dir of [oldNode, oldEngine, newNode, newEngine]) await mkdir(dir, { recursive: true })
+  const oldFrom = {
+    nodePath: join(oldNode, 'bin', 'node'),
+    reaEntry: join(oldEngine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'),
+    managedReaVersion: '6.8.0', managedNodeRange: RANGE, reaVersion: '6.8.0', nodeVersion: 'v24.22.1',
+  }
+  const to = {
+    nodePath: join(newNode, 'bin', 'node'),
+    reaEntry: join(newEngine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'),
+    managedReaVersion: '6.9.0', managedNodeRange: RANGE, reaVersion: '6.9.0', nodeVersion: 'v26.13.0',
+  }
+  // Seed a completed switch, then delete the previous version as an upgrade would.
+  await f.manager.__seed?.(undefined)
+  await writeFile(join(root, '.runtime-transition.json'), JSON.stringify({
+    formatVersion: 1, id: '11111111-2222-4333-8444-555555555555', state: 'ready', from: oldFrom, to, createdAt: new Date().toISOString(),
+  }, null, 2))
+  await f.setCurrent?.({ enabled: true, runtimeDir: root, ...to, env: {} })
+  await rm(oldNode, { recursive: true, force: true })
+  await rm(oldEngine, { recursive: true, force: true })
+  const before = f.calls.prepare
+  await f.manager.rollback(CONFIRM)
+  assert.ok(f.calls.prepare > before, 'the previous version was reinstalled')
+})

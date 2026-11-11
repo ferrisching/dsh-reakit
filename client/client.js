@@ -183,7 +183,24 @@ window.__ModuleLoader__.load({
       "无法访问剪贴板，请手动复制。": "The clipboard is unavailable; copy it manually.",
       "插件下载的 Node 仍占用 {size}；已安装的 REA 会保留，切回只需重新下载 Node，也可以保留。": "The downloaded Node still occupies {size}; the installed REA is kept, so switching back only re-downloads Node — or keep it.",
       "删除 Node 并释放空间": "Delete Node and free space",
-      "。旧版本已删除，切回时需重新下载。": " The previous version was deleted; switching back downloads it again."
+      "。旧版本已删除，切回时需重新下载。": " The previous version was deleted; switching back downloads it again.",
+      "Node 环境": "Node runtime",
+      "当前由哪个 Node 运行插件托管的 REA：": "Which Node runs the plugin-managed REA: ",
+      "插件托管": "plugin-managed",
+      "DSH 内置": "bundled with DSH",
+      "系统 PATH": "system PATH",
+      "使用本机已有的 Node（只装 REA 引擎）": "Use a Node already on this machine (install the REA engine only)",
+      "使用 {version}": "Use {version}",
+      "不会下载插件托管的 Node；REA 引擎仍需安装一次。": "The plugin-managed Node is not downloaded; the REA engine is still installed once.",
+      "插件托管的 Node 已删除": "The plugin-managed Node was deleted",
+      "重新安装后会切回托管 Node；已装的 REA 引擎会复用。": "Installing it again switches back to the plugin-managed Node and reuses the installed REA engine.",
+      "重新安装插件托管 Node": "Install the plugin-managed Node again",
+      "插件托管 Node 已不再使用": "The plugin-managed Node is no longer used",
+      "删除它可以释放约 {size}。REA 引擎会保留，切回时只需重新下载 Node。": "Deleting it frees about {size}. The REA engine stays, so switching back only re-downloads Node.",
+      "删除插件托管 Node": "Delete the plugin-managed Node",
+      "删除后减少约 {size}。REA 引擎会保留，切回时只需重新下载 Node。": "Deleting frees about {size}. The REA engine stays, so switching back only re-downloads Node.",
+      "重新安装后占用约 {install}{download}；已装的 REA 引擎会复用，切回托管 Node。": "Installing it again uses about {install}{download}; the installed REA engine is reused and REA returns to the plugin-managed Node.",
+      "下载约 {size}": "about {size} to download"
     }
 
     var ZH = {}
@@ -493,6 +510,131 @@ window.__ModuleLoader__.load({
       return h(Guard, { children: props.children })
     }
 
+    function originLabel(translate, origin) {
+      switch (origin) {
+        case 'managed': return translate('插件托管')
+        case 'dsh': return translate('DSH 内置')
+        case 'homebrew': return translate('Homebrew')
+        case 'nvm': return translate('nvm')
+        case 'volta': return translate('volta')
+        case 'fnm': return translate('fnm')
+        default: return translate('系统 PATH')
+      }
+    }
+    function NodeEnvironment(props) {
+      var t = makeT(props.t)
+      var row = rowStyle
+      var muted = { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, inherit)', overflowWrap: 'anywhere' }
+      var column = { display: 'flex', flexDirection: 'column', gap: '8px', margin: '8px 0' }
+      var card = { border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.2))', borderRadius: '8px', padding: '10px 12px' }
+      var alertStyle = { color: 'var(--dsw-alias-state-error-primary, inherit)', fontSize: '12px' }
+      var dataState = React.useState(null), data = dataState[0], setData = dataState[1]
+      var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1]
+      var errorState = React.useState(''), error = errorState[0], setError = errorState[1]
+      var alive = React.useRef(true)
+      React.useEffect(function () { return function () { alive.current = false } }, [])
+      function load() {
+        return props.rpc('nodeEnvironment').then(function (value) { if (alive.current) setData(value); return value }).catch(function () { return null })
+      }
+      React.useEffect(function () { load() }, [])
+      function installSizeText(translate, value) {
+        var install = formatBytes(value.managedNodeEstimate)
+        var download = value.managedNodeDownload ? '，' + translate('下载约 {size}').replace('{size}', formatBytes(value.managedNodeDownload)) : ''
+        return translate('重新安装后占用约 {install}{download}；已装的 REA 引擎会复用，切回托管 Node。').replace('{install}', install).replace('{download}', download)
+      }
+      function formatBytes(bytes) {
+        if (!bytes) return '0 MB'
+        if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
+        return Math.round(bytes / (1024 * 1024)) + ' MB'
+      }
+      function installManagedNode() {
+        setBusy(true); setError('')
+        props.rpc('installManagedNode').then(function () {
+          if (!alive.current) return
+          props.onChanged && props.onChanged()
+          return load()
+        }).catch(function (failure) {
+          if (!alive.current) return
+          // Installing restarts REA, so the reply can be lost after the switch applied.
+          setTimeout(function () {
+            load().then(function (value) {
+              if (!alive.current) return
+              props.onChanged && props.onChanged()
+              if (value && (value.nodes || []).some(function (node) { return node.managed && node.active })) { setError(''); return }
+              setError(t('操作失败：') + String(failure.message || failure))
+            })
+          }, 2000)
+        }).finally(function () { if (alive.current) setBusy(false) })
+      }
+      function removeManagedNode() {
+        setBusy(true); setError('')
+        props.rpc('removeManagedNode').then(function () {
+          if (!alive.current) return
+          props.onChanged && props.onChanged()
+          return load()
+        }).catch(function (failure) { if (alive.current) setError(t('操作失败：') + String(failure.message || failure)) })
+          .finally(function () { if (alive.current) setBusy(false) })
+      }
+      function choose(nodePath) {
+        setBusy(true); setError('')
+        props.rpc('setNodeEnvironment', { nodePath }).then(function () {
+          if (!alive.current) return
+          props.onChanged && props.onChanged()
+          return load()
+        }).catch(function (failure) {
+          if (!alive.current) return
+          // Changing the pair restarts REA, which can drop the reply even though the
+          // switch was applied; re-read the effective Node before reporting failure.
+          setTimeout(function () {
+            load().then(function (value) {
+              if (!alive.current) return
+              props.onChanged && props.onChanged()
+              if (value && (value.current === nodePath || (value.nodes || []).some(function (node) { return node.active && node.nodePath === nodePath }))) { setError(''); return }
+              setError(t('操作失败：') + String(failure.message || failure))
+            })
+          }, 2000)
+        }).finally(function () { if (alive.current) setBusy(false) })
+      }
+      if (!data) return null
+      var managed = data.nodes.filter(function (node) { return node.managed && node.compatible })[0]
+      return h('section', { style: box, 'data-rea-node-env': true },
+        h('h4', null, t('Node 环境')),
+        h('p', { style: muted }, t('当前由哪个 Node 运行插件托管的 REA：') + data.reaVersion + ' · ' + data.range),
+        data.nodes.map(function (node) {
+          return h('label', { key: node.nodePath, style: row },
+            h('input', {
+              type: 'radio', name: 'rea-node-env', checked: Boolean(node.active || data.current === node.nodePath),
+              disabled: busy || !props.configurationWritable || !node.compatible,
+              onChange: function () { if (!busy && node.compatible) choose(node.nodePath) },
+              'data-rea-node-env-option': node.nodePath,
+            }),
+            h('span', null,
+              h('span', null, originLabel(t, node.origin) + ' · ' + node.nodeVersion + (node.compatible ? '' : ' · ' + t('不满足要求'))),
+              h('span', { style: { display: 'block', fontSize: '11px', opacity: 0.7, overflowWrap: 'anywhere' } }, node.displayPath || node.nodePath),
+            ),
+          )
+        }),
+        data.nodes.some(function (node) { return !node.managed && !node.compatible && (node.active || data.current === node.nodePath) }) && managed
+          ? h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { choose(managed.nodePath) }, 'data-rea-node-env-upgrade': true }, t('一键升级到插件托管 Node（{version}）').replace('{version}', managed.nodeVersion))
+          : null,
+        !data.managedNodePresent
+          ? h('div', { style: card, 'data-rea-managed-node-missing': true },
+            h('strong', null, t('插件托管的 Node 已删除')),
+            h('p', { style: muted }, installSizeText(t, data)),
+            h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { installManagedNode() }, 'data-rea-install-managed-node': true }, t('重新安装插件托管 Node')),
+          )
+          : null,
+        data.managedNodePresent && data.current && !data.nodes.some(function (node) { return node.managed && (node.active || node.nodePath === data.current) })
+          ? h('div', { style: card, 'data-rea-managed-node': true },
+            h('strong', null, t('插件托管 Node 已不再使用')),
+            h('p', { style: muted }, t('删除后减少约 {size}。REA 引擎会保留，切回时只需重新下载 Node。').replace('{size}', formatBytes(data.managedNodeBytes))),
+            h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { removeManagedNode() }, 'data-rea-remove-managed-node': true }, t('删除插件托管 Node')),
+          )
+          : null,
+        error ? h('p', { role: 'alert', style: alertStyle }, error) : null,
+      )
+    }
+
     function ExistingRuntime(props) {
       var t = makeT(props.t)
       var row = rowStyle
@@ -600,8 +742,7 @@ window.__ModuleLoader__.load({
       }
 
       function describeNode(node) {
-        var parts = [node.managed ? t('插件托管 Node') : t('自有 Node'), node.nodeVersion]
-        return parts.join(' · ')
+        return originLabel(t, node.origin) + ' · ' + node.nodeVersion
       }
       function renderChoice() {
         if (!choice) return null
@@ -644,6 +785,19 @@ window.__ModuleLoader__.load({
       var installCard = installers
         ? h('div', { style: column, 'data-rea-install-choice': true },
           h('p', null, t('本机没有可用的 Node 与 REA，请选择安装位置：')),
+          (props.hostNodes || []).length
+            ? h('div', { style: card, 'data-rea-host-nodes': true },
+              h('strong', null, t('使用本机已有的 Node（只装 REA 引擎）')),
+              (props.hostNodes || []).map(function (node) {
+                return h('button', {
+                  key: node.nodePath, type: 'button', disabled: busy || !props.configurationWritable,
+                  onClick: function () { run(function () { return props.rpc('installEngineWithHostNode', { nodePath: node.nodePath }).then(function () { props.onChanged && props.onChanged() }) }) },
+                  'data-rea-host-node': node.nodePath,
+                }, t('使用 {version}').replace('{version}', node.nodeVersion))
+              }),
+              h('p', { style: muted }, t('不会下载插件托管的 Node；REA 引擎仍需安装一次。')),
+            )
+            : null,
           h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { run(function () { return props.rpc('preferManaged').then(function () { props.onChanged && props.onChanged() }) }) }, 'data-rea-install-managed': true }, t('安装到插件环境（不碰系统 Node）')),
           h('p', { style: muted }, t('或安装到本机，然后回来重新检测：')),
           installers.map(function (installer) {
@@ -826,7 +980,8 @@ window.__ModuleLoader__.load({
             view.runtime.phase === 'error' ? h('p', { role: 'alert', style: textStyle }, view.runtime.message) : null
           ),
           h(RuntimeVersions, { versions: view.runtimeVersions, runtime: view.runtime, busy: busy, configurationWritable: view.configurationWritable, action: action, rpc: rpc, t: t }),
-          h(ExistingRuntime, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, installers: view.runtime && view.runtime.installers, onChanged: reload }),
+          h(NodeEnvironment, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, onChanged: reload }),
+          h(ExistingRuntime, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, installers: view.runtime && view.runtime.installers, hostNodes: view.runtime && view.runtime.hostNodes, onChanged: reload }),
           h('section', { style: box, 'data-rea-model-impact': true },
             h('h4', null, t('模型调用提示')),
             h('p', null, t('当模型因工具参数 Schema 超过允许大小而调用失败时，可考虑临时关闭 REA 后重试；需要使用 REA 时再开启。')),

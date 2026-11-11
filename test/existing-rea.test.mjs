@@ -149,3 +149,17 @@ test('installers are detected without running them', async () => {
   const win = await detectNodeInstallers({ platform: 'win32', env: { PATH: '' }, home: '/nonexistent-home' })
   assert.deepEqual(win, [])
 })
+
+test('Node origins are classified by install location', async () => {
+  const { nodeOrigin } = await import('../lib/existing-rea.js')
+  const home = '/home/user'
+  assert.equal(nodeOrigin('/r/node/x/bin/node', { managed: true }), 'managed')
+  assert.equal(nodeOrigin(process.execPath, { execPath: process.execPath }), 'dsh')
+  assert.equal(nodeOrigin('/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness', {}), 'dsh')
+  assert.equal(nodeOrigin('/opt/homebrew/Cellar/node/26.11.0/bin/node', { home }), 'homebrew')
+  assert.equal(nodeOrigin('/usr/local/opt/node/bin/node', { home }), 'homebrew')
+  assert.equal(nodeOrigin('/home/user/.nvm/versions/node/v24/bin/node', { home }), 'nvm')
+  assert.equal(nodeOrigin('/home/user/.volta/bin/node', { home }), 'volta')
+  assert.equal(nodeOrigin('/home/user/.fnm/aliases/default/bin/node', { home }), 'fnm')
+  assert.equal(nodeOrigin('/usr/bin/node', { home }), 'path')
+})

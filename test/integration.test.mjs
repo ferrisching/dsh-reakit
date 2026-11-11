@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { fileURLToPath } from 'node:url'
+import { mkdtemp, mkdir, rm, writeFile as writeText } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Context, Service } from '@deepseek-ai/cordis'
 import * as realMcp from '@deepseek-ai/dsh-mcp-client'
 import { createApply, Config, inject } from '../lib/index.js'
@@ -134,4 +137,24 @@ test('real Cordis + official MCP bridge: discover, call, error and dispose', asy
   await assert.rejects(echo.execute({ message: 'fail' }, execution), /Fixture failure/)
   await fiber.dispose()
   assert.equal(tools.size, 0)
+})
+
+test('a Node chosen from the machine is validated as a plain pair, not as a managed runtime', async () => {
+  const { inspectManagedRuntime } = await import('../lib/runtime-versions.js')
+  const root = await mkdtemp(join(tmpdir(), 'reakit-hostnode-'))
+  const engine = join(root, 'engine', 'rea-test')
+  await mkdir(join(engine, 'node_modules', 'rea-agents', 'scripts'), { recursive: true })
+  await writeText(join(engine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'), 'export {}\n')
+  await writeText(join(engine, 'node_modules', 'rea-agents', 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.8.0', engines: { node: '>=20' } }))
+  const settings = {
+    runtimeDir: root,
+    nodePath: '/opt/homebrew/bin/node',
+    reaEntry: join(engine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'),
+    managedReaVersion: '6.8.0',
+    managedNodeRange: '>=20',
+  }
+  // A machine Node is outside the managed root, so the managed probe declines
+  // instead of throwing; the caller falls back to the plain inspection path.
+  assert.equal(await inspectManagedRuntime(settings), null)
+  await rm(root, { recursive: true, force: true })
 })

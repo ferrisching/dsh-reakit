@@ -5,33 +5,71 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] — 2026-11-11
+
+Runtime layout, adoption and enterprise-network work. Nothing here changes the
+public tool surface: the plugin still registers all 229 REA tools.
+
+### Added
+
+- **Bring your own REA.** *Settings → REA → Existing REA installation* detects a globally
+  installed `rea-agents`, validates its `scripts/rea.mjs` entry and its `engines.node`
+  contract, and adopts it as the manual `nodePath` / `reaEntry` pair. Detection is
+  read-only: it never runs npm or REA, and an incompatible install is reported as a
+  reason instead of a ready state.
+- **Node environment switch.** *Settings → REA → Node runtime* switches only the Node that runs the
+  plugin-managed REA, keeping the installed engine; an incompatible Node is refused with the
+  required range, and a one-click upgrade returns to the plugin-managed Node.
+- **Node choice.** Every Node the plugin can find is listed with its version and
+  whether it satisfies the chosen REA's `engines.node`; an incompatible choice shows
+  the required range and offers a one-click upgrade to the plugin-managed Node.
+- **Install location choice.** On a machine with no usable environment the plugin no
+  longer downloads on its own: it asks whether to install into the plugin environment
+  or on the machine, naming the installers it actually found (Homebrew, nvm, apt, dnf,
+  winget, Chocolatey) with the exact command.
+- **`npmRegistry` and `nodeMirror`.** https mirrors for the REA package install and the
+  Node distribution. Integrity still comes from the lockfile SRI and the mirror's
+  `SHASUMS256.txt`, which must agree with the pinned digest.
+- **Setup failure classes.** Network, disk and permission failures are reported with an
+  actionable sentence naming the managed root; every other failure keeps its original
+  message.
+
+### Changed
+
+- **Split runtime layout.** The managed runtime is published as two independent trees
+  (`node/<id>` and `engine/<id>`), each with its own ready marker. A fresh install, and
+  now a version switch too, no longer writes a combined generation.
+- **Deleting only the Node part.** *Delete* on an adopted environment removes `node/`
+  and keeps the installed `engine/`, so switching back only re-downloads Node. The
+  choice to keep or delete is remembered.
+- **One version on disk.** A successful version switch deletes the replaced version.
+  Rolling back reinstalls it from the recorded versions (npm metadata plus the Node
+  checksum list), then removes the version that is being replaced.
+- **Shared runtime guard.** Deleting the managed runtime is refused while another DSH
+  profile still runs REA in managed mode, and the blocking profiles are named.
+
+### Fixed
+
+- The settings pane could render completely blank when the existing-REA block
+  referenced a state variable it never declared.
+- Redeeming a runtime after deleting only its Node part reuses the installed engine
+  instead of failing on an existing engine target.
+- Abandoned `.setup-*` staging trees are removed before the next attempt instead of
+  accumulating.
+- The split validator canonicalises the managed root, so a symlinked runtime directory
+  no longer falls through to the legacy combined-layout branch.
+
+### Tests
+
+- 237 cases, up from 192 at 0.1.0.
+
 ## [0.1.0] — 2026-11-10
 
 First public release. `dsh-reakit` is not a thin adapter: it ships a managed
 Node and REA runtime plus a control surface for the harness.
 
-### Changed
-
-- Version switching keeps a single generation on disk: after a successful switch
-  the replaced version is deleted, so returning to it re-installs it (and needs
-  network). Rollback refuses with an explanation when the previous version is gone.
-
-### Fixed
-
-- The managed runtime is published as two independent trees (`node/` and
-  `engine/`), each with its own ready marker. A fresh install no longer writes a
-  combined generation, so removing the Node part only costs a re-download.
-
 ### Added
 
-- **Bring your own REA.** After adopting, the downloaded Node can be deleted to reclaim
-  space while the installed REA engine is kept, so switching back only re-downloads Node. Settings → REA → *Existing REA installation* detects a globally
-  installed `rea-agents`, validates its `scripts/rea.mjs` entry and its `engines.node`
-  contract (managed Node first, host Node second), and adopts it as the manual `nodePath` / `reaEntry`
-  pair. Every Node the plugin can find is listed with its version and whether it satisfies the
-  REA `engines.node` range; an incompatible choice shows the required range and offers a
-  one-click upgrade to the plugin-managed Node. *Switch back to the managed runtime* clears it again. Detection never runs npm or
-  REA, and an incompatible install is reported as a reason instead of a ready state.
 - **Managed runtime.** On first start the plugin provisions a pinned Node
   24.22.1 and REA 6.8.0 from official sources, using a fully locked
   dependency graph (`npm ci --ignore-scripts --include=optional`). No global
@@ -54,49 +92,10 @@ Node and REA runtime plus a control surface for the harness.
 - **Runtime version management**: an explicit "check for updates" step that
   reads official npm and Node.js metadata, prepares a candidate in an isolated
   staging directory, verifies the full dependency lock, and publishes it
-  atomically. The previous generation is preserved and can be rolled back.
+  atomically.
 - **Bilingual UI** (English and Chinese) through the official DSH locale API,
   with backend diagnostics in English.
 - 192 unit, integration and failure-recovery tests.
-
-### Added
-
-- When no usable Node exists, the plugin asks where to install it instead of
-  downloading on its own: into the plugin environment, or on the machine using a
-  detected installer (Homebrew, nvm, apt, dnf, winget, Chocolatey) with the exact
-  command and a re-detect step.
-
-### Added
-
-- Setup failures are classified as network, disk or permission problems and
-  reported with the managed root and the next step; every other failure keeps
-  its original message.
-
-### Added
-
-- `npmRegistry` accepts an https mirror (no credentials, query or fragment) for
-  the REA package install. Package integrity still comes from the lockfile SRI, so
-  using a mirror never weakens verification.
-
-### Added
-
-- `nodeMirror` points the Node archive at an https mirror. The mirror's own
-  `SHASUMS256.txt` must agree with the pinned digest before extraction, so a
-  mirror can never substitute different bytes.
-
-### Fixed
-
-- The settings pane could render completely blank when the existing-REA block
-  referenced a state variable it never declared. The block now declares its own
-  notice state, and a component-level test renders it directly so this class of
-  crash cannot come back.
-
-- Deleting the managed runtime is refused while another DSH profile still runs REA in
-  managed mode, and the blocking profiles are named.
-- Abandoned `.setup-*` staging trees from failed installs are removed before the next
-  attempt instead of accumulating hundreds of MB each.
-- Global REA detection now also covers the Windows locations (`%APPDATA%\npm`,
-  `%LOCALAPPDATA%\pnpm`, `%ProgramFiles%\nodejs`).
 
 ### Security
 

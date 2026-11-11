@@ -216,3 +216,38 @@ test('an invalid Node mirror fails before any download', async t => {
   )
   assert.equal(ran, false)
 })
+
+test('an already prepared managed runtime is recognised without downloading', async () => {
+  const { hasManagedRuntime } = await import('../lib/index.js')
+  const { runtimeLayout } = await import('../lib/bootstrap.js')
+  const root = await mkdtemp(join(tmpdir(), 'reakit-managed-'))
+  const layout = runtimeLayout(join(root, 'runtime'))
+  for (const marker of [layout.nodeMarker, layout.engineMarker]) {
+    await mkdir(dirname(marker), { recursive: true })
+    await writeFile(marker, JSON.stringify({ formatVersion: 1 }))
+  }
+  assert.equal(await hasManagedRuntime({ runtimeDir: join(root, 'runtime') }), true)
+  // A half-removed runtime (Node deleted) is not usable and must not count.
+  await rm(layout.nodeMarker)
+  assert.equal(await hasManagedRuntime({ runtimeDir: join(root, 'runtime') }), false)
+  await rm(root, { recursive: true, force: true })
+})
+
+test('an engine-only install reuses an existing engine and needs npm from that Node', async () => {
+  const { installEngineWithNode, npmCliFor } = await import('../lib/bootstrap.js')
+  const root = await mkdtemp(join(tmpdir(), 'reakit-engine-only-'))
+  const engineDirectory = join(root, 'engine', 'rea-test')
+  await mkdir(engineDirectory, { recursive: true })
+  await writeFile(join(engineDirectory, 'ready.json'), JSON.stringify({ formatVersion: 1 }))
+  // A prepared engine is reused without touching npm.
+  const reused = await installEngineWithNode({ root, engineDirectory, nodePath: '/nonexistent/node' })
+  assert.equal(reused.reused, true)
+  // Without a prepared engine the chosen Node must ship npm.
+  await rm(join(engineDirectory, 'ready.json'))
+  await assert.rejects(
+    installEngineWithNode({ root, engineDirectory, nodePath: '/nonexistent/node' }),
+    /does not ship npm/,
+  )
+  assert.equal(npmCliFor('/home/user/.nvm/versions/node/v24/bin/node'), '/home/user/.nvm/versions/node/v24/lib/node_modules/npm/bin/npm-cli.js')
+  await rm(root, { recursive: true, force: true })
+})

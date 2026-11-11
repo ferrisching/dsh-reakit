@@ -132,10 +132,13 @@ test('candidate preparation stages, verifies and atomically publishes a reusable
     assert.ok(call.args.includes('--include=optional'))
     assert.ok(call.args.includes('--no-audit'))
   }
-  const ready = JSON.parse(await readFile(join(result.directory, 'ready.json'), 'utf8'))
-  assert.equal(ready.formatVersion, 3)
+  const nodeMarker = JSON.parse(await readFile(join(result.directory, 'ready.json'), 'utf8'))
+  const engineMarker = JSON.parse(await readFile(join(result.engineDirectory, 'ready.json'), 'utf8'))
+  assert.equal(nodeMarker.formatVersion, 1)
+  assert.equal(engineMarker.formatVersion, 1)
+  const ready = { ...nodeMarker, ...engineMarker }
   assert.equal(ready.reaIntegrity, INTEGRITY)
-  assert.equal(ready.nodeArchiveSha256, ARCHIVE_SHA256)
+  assert.equal(ready.archiveSha256, ARCHIVE_SHA256)
   assert.equal(ready.platform, process.platform)
   assert.equal(ready.arch, process.arch)
   const active = await inspectManagedRuntime({ runtimeDir: root, nodePath: result.config.command, reaEntry: result.config.args[0], managedReaVersion: REA, managedNodeRange: RANGE })
@@ -159,7 +162,7 @@ test('dynamic activation rejects tampered ready metadata instead of downloading 
   const readyPath = join(result.directory, 'ready.json'), ready = JSON.parse(await readFile(readyPath, 'utf8'))
   ready.platform = 'other-platform'
   await writeFile(readyPath, JSON.stringify(ready))
-  await assert.rejects(inspectManagedRuntime(settings), /ready marker/)
+  await assert.rejects(inspectManagedRuntime(settings), /ready marker|another platform/)
   ready.platform = process.platform
   await writeFile(readyPath, JSON.stringify(ready))
   await writeFile(result.config.args[0], 'tampered entry')

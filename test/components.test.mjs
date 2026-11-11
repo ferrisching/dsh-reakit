@@ -227,7 +227,7 @@ test('JAR hash mismatch cleans only its temporary file and never publishes', asy
 })
 
 test('Remote descriptors and controller keep owner authentication and retry diagnostics', async () => {
-  assert.deepEqual(COMPONENTS_TYPERT.invocations.map(item => item.method), ['describe', 'status', 'retrySetup', 'setEnabled', 'detectExisting', 'detectNodes', 'adoptExisting', 'useManagedRuntime', 'preferManaged', 'managedEnvironment', 'keepManagedEnvironment', 'removeManagedEnvironment', 'migrateRuntime', 'applyRuntimeSplit', 'checkRuntimeUpdates', 'prepareRuntimeSwitch', 'rollbackRuntime', 'previewInstall', 'install', 'configure'])
+  assert.deepEqual(COMPONENTS_TYPERT.invocations.map(item => item.method), ['describe', 'status', 'retrySetup', 'setEnabled', 'detectExisting', 'detectNodes', 'nodeEnvironment', 'setNodeEnvironment', 'adoptExisting', 'installEngineWithHostNode', 'removeManagedNode', 'installManagedNode', 'useManagedRuntime', 'preferManaged', 'managedEnvironment', 'keepManagedEnvironment', 'removeManagedEnvironment', 'migrateRuntime', 'applyRuntimeSplit', 'checkRuntimeUpdates', 'prepareRuntimeSwitch', 'rollbackRuntime', 'previewInstall', 'install', 'configure'])
   assert.ok(COMPONENTS_TYPERT.invocations.every(item => item.service === 'reaComponentsController' && item.namespace === 'reaComponents'))
   const ctx = new Context()
   await ctx.plugin(function controller(inner) { new ComponentsController(inner, { manager: { describe: async () => ({ runtime: { phase: 'error', message: 'setup failed' } }) }, configuration: { writable: () => true, read: () => ({ enabled: true }) }, retrySetup: async () => { throw new Error('download failed') } }) })
@@ -522,8 +522,10 @@ test('lightweight owner status never invokes the component probes', async () => 
 
 test('optional Typert injection never blocks core initialization', () => {
   const registered = []
-  const ctx = { get: () => undefined, inject: (names, callback) => { registered.push(names); return { then: () => assert.fail('optional Fiber must not be awaited') } } }
-  assert.equal(registerComponents(ctx, { getRuntimeState: () => ({ phase: 'disabled' }), retrySetup: async () => {} }), undefined)
+  const fiber = { dispose: async () => {} }
+  const ctx = { get: () => undefined, inject: (names, callback) => { registered.push(names); return fiber } }
+  // The fiber is returned so the plugin can dispose the stale remote service on reload.
+  assert.equal(registerComponents(ctx, { getRuntimeState: () => ({ phase: 'disabled' }), retrySetup: async () => {} }), fiber)
   assert.deepEqual(registered, [['typert']])
 })
 
@@ -628,5 +630,103 @@ test('shipped registry accepts descriptors and cleans them on dispose', { skip: 
     assert.equal(ctx.typert.local.get('reaComponents/install').service, 'reaComponentsController')
     dispose()
     assert.equal(ctx.typert.local.get('reaComponents/install'), undefined)
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('the Node environment can be switched without touching the REA entry', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'reakit-node-env-'))
+  const dir = join(base, 'rea-agents')
+  await mkdir(join(dir, 'scripts'), { recursive: true })
+  await writeText(join(dir, 'scripts', 'rea.mjs'), 'export {}\n')
+  await writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.8.0', engines: { node: '>=20.0.0' } }))
+  const entry = join(dir, 'scripts', 'rea.mjs')
+  const writes = []
+  const settings = { enabled: true, nodePath: '/old/node', reaEntry: entry, managedReaVersion: '6.8.0', managedNodeRange: '>=20.0.0' }
+  const ctx = new Context()
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, {
+      manager: {}, retrySetup: async () => {}, versions: { status: () => ({}) },
+      getRuntimeState: () => ({ phase: 'ready', nodePath: '/old/node', nodeVersion: 'v24.22.1' }),
+      configuration: {
+        read: () => settings, writable: () => true, entryId: () => 'rea',
+        nodePathOnly: async (nodePath, expected) => { writes.push({ nodePath, expected }); return { saved: true } },
+        preferences: async () => ({ saved: true }),
+      },
+    })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    const view = await owner.reaComponentsController.nodeEnvironment()
+    assert.equal(view.reaVersion, '6.8.0')
+    assert.ok(view.nodes.length >= 1, 'the host Node is offered')
+    const result = await owner.reaComponentsController.setNodeEnvironment(process.execPath)
+    assert.equal(result.saved, true)
+    assert.equal(writes.at(-1).nodePath, process.execPath)
+    assert.deepEqual(writes.at(-1).expected, { nodePath: '/old/node' }, 'compares the current Node only')
+    await assert.rejects(owner.reaComponentsController.setNodeEnvironment(''), /Node path is required/)
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('deleting the managed Node is refused while it is still in use', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'reakit-node-remove-'))
+  const { runtimeLayout } = await import('../lib/bootstrap.js')
+  const layout = runtimeLayout(join(root, 'runtime'))
+  await mkdir(layout.nodeDirectory, { recursive: true })
+  const ctx = new Context()
+  const settings = { enabled: true, runtimeDir: join(root, 'runtime'), nodePath: layout.nodePath, reaEntry: layout.reaEntry, managedReaVersion: '6.8.0', managedNodeRange: '>=20' }
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, {
+      manager: {}, retrySetup: async () => {}, versions: { status: () => ({}) },
+      getRuntimeState: () => ({ phase: 'ready' }),
+      configuration: { read: () => settings, writable: () => true, entryId: () => 'rea' },
+    })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    await assert.rejects(owner.reaComponentsController.removeManagedNode(), /still configured|switch to another Node first/)
+  } finally { await ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) }
+})
+
+test('the node panel reports the space a reinstall costs', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'reakit-node-size-'))
+  const { runtimeLayout } = await import('../lib/bootstrap.js')
+  const layout = runtimeLayout(join(root, 'runtime'))
+  const engine = join(root, 'engine', 'test')
+  await mkdir(join(engine, 'scripts'), { recursive: true })
+  await writeText(join(engine, 'scripts', 'rea.mjs'), 'export {}\n')
+  await writeText(join(engine, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.8.0', engines: { node: '>=20' } }))
+  const ctx = new Context()
+  const settings = { enabled: true, runtimeDir: join(root, 'runtime'), nodePath: '/opt/homebrew/bin/node', reaEntry: join(engine, 'scripts', 'rea.mjs'), managedReaVersion: '6.8.0', managedNodeRange: '>=20' }
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, { manager: {}, retrySetup: async () => {}, versions: { status: () => ({}) }, getRuntimeState: () => ({ phase: 'ready', nodePath: '/opt/homebrew/bin/node', nodeVersion: 'v26.13.0' }), configuration: { read: () => settings, writable: () => true, entryId: () => 'rea' } })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    const view = await owner.reaComponentsController.nodeEnvironment()
+    assert.equal(view.managedNodePresent, false)
+    assert.ok(view.managedNodeEstimate > 100e6, 'an install estimate is reported')
+    assert.ok('managedNodeDownload' in view)
+    assert.equal(view.managedNodePath, layout.nodePath)
+  } finally { await ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) }
+})
+
+test('the controller exposes the managed and engine-only installers it is given', async () => {
+  const ctx = new Context()
+  let called = null
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, {
+      manager: { describe: async () => ({ runtime: { phase: 'ready' } }) },
+      configuration: { read: () => ({ enabled: true, reaEntry: '/tmp/rea.mjs' }), writable: () => true, entryId: () => 'rea' },
+      retrySetup: async () => {},
+      getRuntimeState: () => ({ phase: 'ready' }),
+      installManagedRuntime: async () => { called = 'managed'; return { nodePath: '/r/node' } },
+      versions: { status: () => ({}) },
+    })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    const result = await owner.reaComponentsController.installManagedNode()
+    assert.equal(called, 'managed')
+    assert.equal(result.nodePath, '/r/node')
   } finally { await ctx.fiber.dispose() }
 })
