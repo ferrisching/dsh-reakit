@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] — 2026-11-11
+
+Self-healing after a profile configuration reset (DSH upgrades can drop the
+plugin's stored paths).
+
+### Fixed
+
+- In automatic mode the plugin now looks for a prepared runtime under
+  `runtime/node/*` and `runtime/engine/*` and reuses it, writing the pair back to
+  the configuration, instead of reporting "no usable Node or REA" and asking for
+  a second download.
+
 ## [0.1.3] — 2026-11-11
 
 Compatibility with DSH 0.2.2-rc.2.

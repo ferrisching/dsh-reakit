@@ -251,3 +251,23 @@ test('an engine-only install reuses an existing engine and needs npm from that N
   assert.equal(npmCliFor('/home/user/.nvm/versions/node/v24/bin/node'), '/home/user/.nvm/versions/node/v24/lib/node_modules/npm/bin/npm-cli.js')
   await rm(root, { recursive: true, force: true })
 })
+
+test('a prepared runtime is rediscovered when the configuration forgot its paths', async () => {
+  const { discoverInstalledRuntime } = await import('../lib/index.js')
+  const root = await mkdtemp(join(tmpdir(), 'reakit-rediscover-'))
+  const nodeId = 'darwin-arm64-26.13.0-abc123456789'
+  const engineId = 'rea6.8.0-def123456789'
+  await mkdir(join(root, 'node', nodeId, 'bin'), { recursive: true })
+  await mkdir(join(root, 'engine', engineId, 'node_modules', 'rea-agents', 'scripts'), { recursive: true })
+  await writeFile(join(root, 'node', nodeId, 'ready.json'), JSON.stringify({ formatVersion: 1, nodeVersion: '26.13.0' }))
+  await writeFile(join(root, 'engine', engineId, 'ready.json'), JSON.stringify({ formatVersion: 1, reaVersion: '6.8.0', nodeRange: '>=26.12.1' }))
+  const found = await discoverInstalledRuntime({ runtimeDir: root })
+  assert.equal(found.config.managedReaVersion, '6.8.0')
+  assert.equal(found.config.managedNodeRange, '>=26.12.1')
+  assert.ok(found.nodePath.includes(nodeId))
+  assert.ok(found.reaEntry.includes(engineId))
+  // A Node that does not satisfy the engine range is not offered.
+  await writeFile(join(root, 'engine', engineId, 'ready.json'), JSON.stringify({ formatVersion: 1, reaVersion: '6.8.0', nodeRange: '>=99' }))
+  assert.equal(await discoverInstalledRuntime({ runtimeDir: root }), null)
+  await rm(root, { recursive: true, force: true })
+})
