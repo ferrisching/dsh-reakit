@@ -7,7 +7,7 @@
 <div align="center">
   <b>为 DeepSeek Harness 准备的 REA 一体化插件</b><br />
   自托管 Node 与 REA 运行时、覆盖全部 229 项工具的单一开关、输入框运行状态点、<br />
-  按需配置可选分析器，以及可回退的运行时版本切换<br /><br />
+  按需配置可选分析器，以及可回退的运行时版本升级<br /><br />
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm version" src="https://img.shields.io/npm/v/dsh-reakit" /></a>
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-reakit" /></a>
   <a href="https://github.com/ferrisching/dsh-reakit/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ferrisching/dsh-reakit" /></a>
@@ -127,7 +127,7 @@ dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
 | REA 工具总开关 | 与输入框按钮共用的总开关，并在需要时说明为何不能关闭 |
 | 模型调用提示 | 条件建议：当模型因参数 Schema 超过允许大小而调用失败时，可临时关闭 REA 后重试。同时列出 Kimi / Moonshot 的 Schema 尺寸注意事项，以及 DeepSeek strict 模式与 OpenAI strict 工具模式的 JSON Schema 子集规则 |
 | 输入框快捷开关 | 显示或隐藏输入框按钮；通过官方 Config Forms 保存并同步到其他窗口，不重启 REA |
-| 运行时版本 | 默认折叠。**检查更新** 读取官方 npm 与 Node.js 元数据；准备候选需要两次确认；磁盘只保留一个版本，回退意味着重新安装上一版 |
+| 运行时版本 | 默认折叠。**检查更新** 读取官方 npm 与 Node.js 元数据；准备候选需要两次确认；磁盘只保留一个版本且不提供回退，需要回到旧版只能重新安装 |
 | 可选工具配置 | 默认折叠。一份针对当前已安装实例的可复制 AI 指令；插件自身不安装任何组件 |
 
 高级字段在 profile 配置中。`npmRegistry` 可填安装 REA 依赖时使用的 https 镜像（不允许内嵌凭据、查询参数或片段）；完整性仍由锁文件的 SRI 保证，换镜像不降低校验强度。留空则使用 `registry.npmjs.org`。`nodeMirror` 同理作用于 Node 发行版：填 https 基地址（如 `https://mirror.example.com/nodejs`），其 `SHASUMS256.txt` 必须与源码里固定的摘要一致才会解压；留空使用 `nodejs.org/dist`。

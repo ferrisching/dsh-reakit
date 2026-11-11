@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-11-11
+
+Version management now only moves forward, and a plugin-managed runtime can be
+upgraded without first having a transition record.
+
+### Changed
+
+- **Forward-only.** The rollback path is gone: a successful upgrade deletes the
+  replaced version, so the panel offers one action (prepare and upgrade) instead
+  of a rollback that could only re-download.
+- Wording follows the behaviour: "version upgrade" everywhere, with no rollback
+  or switch-back phrasing left in the panel.
+
+### Fixed
+
+- A runtime whose pair sits inside `runtime/node` is recognised as plugin-managed
+  and can be upgraded; previously every upgrade was refused as a manual
+  configuration unless a transition record already existed. An adopted pair
+  outside the managed root is still refused.
+
 ## [0.1.1] — 2026-11-11
 
 Runtime layout, adoption and enterprise-network work. Nothing here changes the
@@ -38,13 +58,13 @@ public tool surface: the plugin still registers all 229 REA tools.
 
 - **Split runtime layout.** The managed runtime is published as two independent trees
   (`node/<id>` and `engine/<id>`), each with its own ready marker. A fresh install, and
-  now a version switch too, no longer writes a combined generation.
+  now a version upgrade too, no longer writes a combined generation.
 - **Deleting only the Node part.** *Delete* on an adopted environment removes `node/`
   and keeps the installed `engine/`, so switching back only re-downloads Node. The
   choice to keep or delete is remembered.
-- **One version on disk.** A successful version switch deletes the replaced version.
-  Rolling back reinstalls it from the recorded versions (npm metadata plus the Node
-  checksum list), then removes the version that is being replaced.
+- **One version on disk.** A successful version upgrade deletes the replaced version.
+  Version management only moves forward: there is no rollback, because the replaced
+  version is gone and re-installing it would mean downloading it again.
 - **Shared runtime guard.** Deleting the managed runtime is refused while another DSH
   profile still runs REA in managed mode, and the blocking profiles are named.
 

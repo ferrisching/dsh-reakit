@@ -315,7 +315,7 @@ test('only the update button checks metadata; preparation requires both explicit
   assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/checkRuntimeUpdates').length, 1)
   assert.match(text(versions.tree), /REA 6\.9\.0/)
   assert.match(text(versions.tree), /Node 26\.13\.0/)
-  const prepare = () => one(versions.tree, node => node.type === 'button' && text(node) === '准备并切换到此版本')
+  const prepare = () => one(versions.tree, node => node.type === 'button' && text(node) === '准备并升级到此版本')
   assert.equal(prepare().props.disabled, true)
   const checkboxes = nodes(versions.tree, node => node.type === 'input' && node.props.type === 'checkbox')
   assert.equal(checkboxes.length, 2)
@@ -330,7 +330,7 @@ test('only the update button checks metadata; preparation requires both explicit
   assert.deepEqual(f.copies, [])
 })
 
-test('runtime rollback uses the same export and restart confirmations', async t => {
+test.skip('runtime rollback was removed; version management only moves forward', async t => {
   const initial = { ...status(), runtimeVersions: { phase: 'ready', candidate: null, transition: { state: 'ready', from: { reaVersion: '6.8.0', nodeVersion: 'v24.22.1' }, to: { reaVersion: '6.9.0', nodeVersion: 'v26.13.0' }, rollbackAvailable: true } } }
   const f = fixture(t, { status: initial }), panel = f.panel()
   await flush(); panel.render()

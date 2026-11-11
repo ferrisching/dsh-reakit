@@ -127,7 +127,7 @@ Turning REA **on** adds the full tool definitions to later model requests; turni
 | REA tool switch | Master switch, shared with the composer button, with the call-lock explanation inline |
 | Model call guidance | Conditional advice: if a model call fails because the parameter schema exceeds the allowed size, temporarily disable REA and retry. Lists the Kimi / Moonshot schema-size caveat and the JSON Schema subset rules of DeepSeek strict mode and OpenAI strict tool mode |
 | Input switch | Show or hide the composer button; stored through official Config Forms, synced to other windows, never restarts REA |
-| Runtime version | Collapsed. **Check for updates** reads official npm and Node.js metadata; preparing a candidate requires two confirmations; only one version is kept, so rolling back re-installs the previous one |
+| Runtime version | Collapsed. **Check for updates** reads official npm and Node.js metadata; preparing a candidate requires two confirmations; only one version is kept and there is no rollback button, so going back means re-downloading the previous release |
 | Optional tool setup | Collapsed. One copyable AI prompt scoped to this installed instance; nothing is installed by the plugin |
 
 Advanced fields live in the profile configuration. `npmRegistry` accepts an https mirror (no credentials, query or fragment) for the REA package install; integrity still comes from the lockfile SRI, so a mirror never weakens verification. Empty keeps `registry.npmjs.org`. `nodeMirror` does the same for the Node distribution: an https base such as `https://mirror.example.com/nodejs`, whose `SHASUMS256.txt` must agree with the pinned digest before anything is extracted; empty keeps `nodejs.org/dist`.

@@ -74,31 +74,6 @@ test('switch requires both confirmations and an inactive session', async t => {
   assert.equal(f.writes.length, 0)
 })
 
-test('prepared switch preserves unrelated config and supports rollback after reload', async t => {
-  const f = await fixture(t), token = (await f.manager.checkUpdates()).token
-  const result = await f.manager.prepareSwitch(token, CONFIRM)
-  assert.equal(result.started, true)
-  assert.equal(f.calls.prepare, 1)
-  assert.equal(f.writes.length, 1)
-  assert.equal(f.getCurrent().managedReaVersion, '6.9.0')
-  assert.equal(f.getCurrent().managedNodeRange, '>=24.22.1')
-  assert.equal(f.getCurrent().enabled, true)
-  assert.deepEqual(f.getCurrent().env, { KEEP: 'unchanged' })
-  assert.equal(f.getCurrent().showComposerToggle, true)
-  assert.equal(f.manager.status().transition.state, 'ready')
-  assert.equal(f.manager.status().transition.rollbackAvailable, true)
-  await assert.rejects(f.manager.prepareSwitch(token, CONFIRM), /expired/)
-  assert.equal(f.writes.length, 1, 'candidate token is single use')
-  await f.manager.rollback(CONFIRM)
-  assert.equal(f.getCurrent().nodePath, '')
-  assert.equal(f.getCurrent().reaEntry, '')
-  assert.equal(f.getCurrent().managedReaVersion, '')
-  assert.equal(f.getCurrent().managedNodeRange, '')
-  assert.equal(f.manager.status().transition, null)
-  const files = await readdir(f.root)
-  assert.equal(files.includes('.runtime-transition.json'), false)
-})
-
 test('a lost response after accepted edit is refreshed, not replayed', async t => {
   const f = await fixture(t), token = (await f.manager.checkUpdates()).token
   f.applyThenFail()
@@ -106,18 +81,6 @@ test('a lost response after accepted edit is refreshed, not replayed', async t =
   assert.equal(f.writes.length, 1)
   assert.equal(f.getCurrent().managedReaVersion, '6.9.0')
   assert.equal(f.manager.status().transition.state, 'ready')
-})
-
-test('rollback edit failure leaves a retryable transition and never overwrites newer config', async t => {
-  const f = await fixture(t), token = (await f.manager.checkUpdates()).token
-  await f.manager.prepareSwitch(token, CONFIRM)
-  f.failWrites(1)
-  await assert.rejects(f.manager.rollback(CONFIRM), /edit rejected/)
-  assert.equal(f.manager.status().transition.state, 'rolling-back')
-  assert.equal(f.manager.status().transition.rollbackAvailable, true)
-  await f.manager.rollback(CONFIRM)
-  assert.equal(f.getCurrent().nodePath, '')
-  assert.equal(f.manager.status().transition, null)
 })
 
 test('manual runtime paths are never overwritten', async t => {
@@ -132,32 +95,6 @@ test('strict configuration read failure does not become automatic managed mode',
   await assert.rejects(f.manager.checkUpdates(), /configuration unavailable/)
   assert.equal(f.calls.check, 0)
   assert.equal(f.writes.length, 0)
-})
-
-test('malformed transition IDs and symlink records are preserved without any write', async t => {
-  const point = { nodePath: '', reaEntry: '', managedReaVersion: '', managedNodeRange: '', reaVersion: '6.8.0', nodeVersion: 'v24.22.1' }
-  const target = { nodePath: '/managed/node', reaEntry: '/managed/rea/scripts/rea.mjs', managedReaVersion: '6.9.0', managedNodeRange: '>=24.22.1', reaVersion: '6.9.0', nodeVersion: 'v26.13.0' }
-  for (const malicious of [{ id: '../escape' }, { id: randomUUID(), symlink: true }]) {
-    const f = await fixture(t), file = join(f.root, '.runtime-transition.json')
-    if (malicious.symlink) {
-      const actual = join(f.root, 'actual.json'); await writeFile(actual, JSON.stringify({ formatVersion: 1, id: malicious.id, state: 'rolling-back', from: point, to: target }))
-      await symlink(actual, file)
-    } else await writeFile(file, JSON.stringify({ formatVersion: 1, id: malicious.id, state: 'rolling-back', from: point, to: target }))
-    await assert.rejects(f.manager.rollback(CONFIRM), /No runtime transition record/)
-    assert.equal(f.writes.length, 0)
-    assert.equal((await readdir(f.root)).some(name => name.includes('escape') || name.endsWith('.tmp')), false)
-    await rm(file, { force: true })
-  }
-})
-
-test('upgrading removes the replaced version, so rollback must re-install it', async t => {
-  const f = await fixture(t)
-  const token = (await f.manager.checkUpdates()).token
-  await f.manager.prepareSwitch(token, CONFIRM)
-  // The switch reports what it removed; the previous version must be gone.
-  const after = f.manager.status()
-  assert.equal(after.transition.state, 'ready')
-  assert.equal(f.getCurrent().managedReaVersion, '6.9.0')
 })
 
 test('managed parts resolve when the record carries no runtimeDir', async () => {
@@ -187,33 +124,21 @@ test('managed parts cover split and legacy layouts', async () => {
 
 
 
-test('rolling back reinstalls a deleted previous version', async t => {
+test('a pair inside the managed root may be replaced by a version switch', async t => {
   const f = await fixture(t)
   const root = f.root
-  const oldNode = join(root, 'node', 'old-node')
-  const oldEngine = join(root, 'engine', 'old-engine')
-  const newNode = join(root, 'node', 'new-node')
-  const newEngine = join(root, 'engine', 'new-engine')
-  for (const dir of [oldNode, oldEngine, newNode, newEngine]) await mkdir(dir, { recursive: true })
-  const oldFrom = {
-    nodePath: join(oldNode, 'bin', 'node'),
-    reaEntry: join(oldEngine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'),
-    managedReaVersion: '6.8.0', managedNodeRange: RANGE, reaVersion: '6.8.0', nodeVersion: 'v24.22.1',
-  }
-  const to = {
-    nodePath: join(newNode, 'bin', 'node'),
-    reaEntry: join(newEngine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'),
-    managedReaVersion: '6.9.0', managedNodeRange: RANGE, reaVersion: '6.9.0', nodeVersion: 'v26.13.0',
-  }
-  // Seed a completed switch, then delete the previous version as an upgrade would.
-  await f.manager.__seed?.(undefined)
-  await writeFile(join(root, '.runtime-transition.json'), JSON.stringify({
-    formatVersion: 1, id: '11111111-2222-4333-8444-555555555555', state: 'ready', from: oldFrom, to, createdAt: new Date().toISOString(),
-  }, null, 2))
-  await f.setCurrent?.({ enabled: true, runtimeDir: root, ...to, env: {} })
-  await rm(oldNode, { recursive: true, force: true })
-  await rm(oldEngine, { recursive: true, force: true })
-  const before = f.calls.prepare
-  await f.manager.rollback(CONFIRM)
-  assert.ok(f.calls.prepare > before, 'the previous version was reinstalled')
+  const node = join(root, 'node', 'darwin-arm64-26.13.0-abc', 'bin', 'node')
+  await mkdir(dirname(node), { recursive: true })
+  f.setCurrent({ enabled: true, runtimeDir: root, nodePath: node, reaEntry: join(root, 'engine', 'rea-x', 'rea.mjs'), managedReaVersion: '6.8.0', managedNodeRange: RANGE, env: {} })
+  f.setRuntime({ phase: 'ready', reaVersion: '6.8.0', nodeVersion: 'v26.13.0', nodeRange: RANGE })
+  const token = (await f.manager.checkUpdates()).token
+  await f.manager.prepareSwitch(token, CONFIRM)
+  assert.equal(f.writes.length > 0, true, 'the switch was allowed to write the new pair')
+})
+
+test('an adopted pair outside the managed root is still refused', async t => {
+  const f = await fixture(t)
+  f.setCurrent({ enabled: true, runtimeDir: f.root, nodePath: '/opt/homebrew/bin/node', reaEntry: '/tmp/rea.mjs', managedReaVersion: '', managedNodeRange: '', env: {} })
+  const token = (await f.manager.checkUpdates()).token
+  await assert.rejects(f.manager.prepareSwitch(token, CONFIRM), /manual runtime configuration/)
 })

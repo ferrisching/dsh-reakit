@@ -227,7 +227,7 @@ test('JAR hash mismatch cleans only its temporary file and never publishes', asy
 })
 
 test('Remote descriptors and controller keep owner authentication and retry diagnostics', async () => {
-  assert.deepEqual(COMPONENTS_TYPERT.invocations.map(item => item.method), ['describe', 'status', 'retrySetup', 'setEnabled', 'detectExisting', 'detectNodes', 'nodeEnvironment', 'setNodeEnvironment', 'adoptExisting', 'installEngineWithHostNode', 'removeManagedNode', 'installManagedNode', 'useManagedRuntime', 'preferManaged', 'managedEnvironment', 'keepManagedEnvironment', 'removeManagedEnvironment', 'migrateRuntime', 'applyRuntimeSplit', 'checkRuntimeUpdates', 'prepareRuntimeSwitch', 'rollbackRuntime', 'previewInstall', 'install', 'configure'])
+  assert.deepEqual(COMPONENTS_TYPERT.invocations.map(item => item.method), ['describe', 'status', 'retrySetup', 'setEnabled', 'detectExisting', 'detectNodes', 'nodeEnvironment', 'setNodeEnvironment', 'adoptExisting', 'installEngineWithHostNode', 'removeManagedNode', 'installManagedNode', 'useManagedRuntime', 'preferManaged', 'managedEnvironment', 'keepManagedEnvironment', 'removeManagedEnvironment', 'migrateRuntime', 'applyRuntimeSplit', 'checkRuntimeUpdates', 'prepareRuntimeSwitch', 'previewInstall', 'install', 'configure'])
   assert.ok(COMPONENTS_TYPERT.invocations.every(item => item.service === 'reaComponentsController' && item.namespace === 'reaComponents'))
   const ctx = new Context()
   await ctx.plugin(function controller(inner) { new ComponentsController(inner, { manager: { describe: async () => ({ runtime: { phase: 'error', message: 'setup failed' } }) }, configuration: { writable: () => true, read: () => ({ enabled: true }) }, retrySetup: async () => { throw new Error('download failed') } }) })

@@ -90,19 +90,17 @@ window.__ModuleLoader__.load({
       "npm 官方发布": "official npm release",
       "平台：": "Platform: ",
       "Node.js 官方发布": "official Node.js release",
-      "该 REA 版本已被标记为弃用，只展示信息，不提供准备或切换。": "This REA release is marked deprecated; it is shown for information only and cannot be prepared or switched to.",
+      "该 REA 版本已被标记为弃用，只展示信息，不提供准备或升级。": "This REA release is marked deprecated; it is shown for information only and cannot be prepared or upgraded to.",
       "当前 REA 不支持候选 Node；需要先升级 REA，不会单独替换 Node。": "The current REA does not support the candidate Node; upgrade REA first, because Node is never replaced on its own.",
-      "上次版本切换已完成": "The last version switch completed",
-      "正在回退到旧版本": "Rolling back to the previous version",
-      "版本切换尚未完成": "The version switch has not completed",
+      "上次版本升级已完成": "The last version upgrade completed",
+      "版本升级尚未完成": "The version upgrade has not completed",
       "从 REA ": "From REA ",
       " 到 REA ": " to REA ",
       "。旧运行时文件保留。": ". The previous runtime files are kept.",
       "我已导出活动分析会话，或确认没有需要保留的会话": "I exported the active analysis session, or there is nothing to keep",
-      "我确认版本切换或回退会重启 REA": "I understand that switching or rolling back restarts REA",
-      "准备并切换到此版本": "Prepare and switch to this version",
-      "回退到之前的版本": "Roll back to the previous version",
-      "当前版本已与官方候选一致，无需切换。": "The current version already matches the official candidate; nothing to switch.",
+      "我确认版本升级会重启 REA": "I understand that upgrading restarts REA",
+      "准备并升级到此版本": "Prepare and upgrade to this version",
+      "当前版本已与官方候选一致，无需升级。": "The current version already matches the official candidate; nothing to upgrade.",
       "REA 状态暂不可用：": "REA status is temporarily unavailable: ",
       "无法访问剪贴板，请在下方展开的指令中手动复制。": "The clipboard is unavailable; expand the instructions below and copy them manually.",
       "已复制可选工具配置指令；仅针对本次缺失项检查，确认后再补齐依赖。": "Setup instructions copied; they cover only the currently missing items, and dependencies are installed after your confirmation.",
@@ -183,7 +181,7 @@ window.__ModuleLoader__.load({
       "无法访问剪贴板，请手动复制。": "The clipboard is unavailable; copy it manually.",
       "插件下载的 Node 仍占用 {size}；已安装的 REA 会保留，切回只需重新下载 Node，也可以保留。": "The downloaded Node still occupies {size}; the installed REA is kept, so switching back only re-downloads Node — or keep it.",
       "删除 Node 并释放空间": "Delete Node and free space",
-      "。旧版本已删除，切回时需重新下载。": " The previous version was deleted; switching back downloads it again.",
+      "。旧版本已删除。": " The previous version was deleted.",
       "Node 环境": "Node runtime",
       "当前由哪个 Node 运行插件托管的 REA：": "Which Node runs the plugin-managed REA: ",
       "插件托管": "plugin-managed",
@@ -200,7 +198,8 @@ window.__ModuleLoader__.load({
       "删除插件托管 Node": "Delete the plugin-managed Node",
       "删除后减少约 {size}。REA 引擎会保留，切回时只需重新下载 Node。": "Deleting frees about {size}. The REA engine stays, so switching back only re-downloads Node.",
       "重新安装后占用约 {install}{download}；已装的 REA 引擎会复用，切回托管 Node。": "Installing it again uses about {install}{download}; the installed REA engine is reused and REA returns to the plugin-managed Node.",
-      "下载约 {size}": "about {size} to download"
+      "下载约 {size}": "about {size} to download",
+      "准备并切换到此版本": "准备并切换到此版本"
     }
 
     var ZH = {}
@@ -454,7 +453,7 @@ window.__ModuleLoader__.load({
       var versions = props.versions || { phase: 'idle', candidate: null, transition: null }
       var candidate = versions.candidate, transition = versions.transition
       var canPrepare = !!(candidate && versions.updateAvailable && !candidate.rea.deprecated)
-      var needsConfirmation = canPrepare || !!(transition && transition.rollbackAvailable)
+      var needsConfirmation = canPrepare
       function run(method, args) {
         props.action(function () { return props.rpc(method, args).finally(notifyConfigurationChanged) })
       }
@@ -483,21 +482,20 @@ window.__ModuleLoader__.load({
               h('a', { href: candidate.node.source, target: '_blank', rel: 'noopener noreferrer' }, t('Node.js 官方发布'))
             )
           ) : null,
-          candidate && candidate.rea.deprecated ? h('p', { role: 'alert' }, t('该 REA 版本已被标记为弃用，只展示信息，不提供准备或切换。')) : null,
+          candidate && candidate.rea.deprecated ? h('p', { role: 'alert' }, t('该 REA 版本已被标记为弃用，只展示信息，不提供准备或升级。')) : null,
           candidate && versions.newerNodeRequiresReaUpgrade ? h('p', { className: 'rea-muted' }, t('当前 REA 不支持候选 Node；需要先升级 REA，不会单独替换 Node。')) : null,
           transition ? h('div', { className: 'rea-note', 'data-rea-runtime-transition': true },
-            h('p', null, transition.state === 'ready' ? t('上次版本切换已完成') : transition.state === 'rolling-back' ? t('正在回退到旧版本') : t('版本切换尚未完成')),
-            h('p', { className: 'rea-muted' }, t('从 REA ') + transition.from.reaVersion + ' / Node ' + transition.from.nodeVersion + t(' 到 REA ') + transition.to.reaVersion + ' / Node ' + transition.to.nodeVersion + t('。旧版本已删除，切回时需重新下载。'))
+            h('p', null, transition.state === 'ready' ? t('上次版本升级已完成') : t('版本升级尚未完成')),
+            h('p', { className: 'rea-muted' }, t('从 REA ') + transition.from.reaVersion + ' / Node ' + transition.from.nodeVersion + t(' 到 REA ') + transition.to.reaVersion + ' / Node ' + transition.to.nodeVersion + t('。旧版本已删除。'))
           ) : null,
           needsConfirmation ? h('div', { 'data-rea-version-confirmation': true },
             h('label', { style: rowStyle }, h('input', { type: 'checkbox', checked: exported, disabled: props.busy, onChange: function (event) { setExported(event.target.checked) } }), t('我已导出活动分析会话，或确认没有需要保留的会话')),
-            h('label', { style: rowStyle }, h('input', { type: 'checkbox', checked: confirmed, disabled: props.busy, onChange: function (event) { setConfirmed(event.target.checked) } }), t('我确认版本切换或回退会重启 REA')),
+            h('label', { style: rowStyle }, h('input', { type: 'checkbox', checked: confirmed, disabled: props.busy, onChange: function (event) { setConfirmed(event.target.checked) } }), t('我确认版本升级会重启 REA')),
             h('div', { className: 'rea-version-actions' },
-              canPrepare ? h('button', { type: 'button', className: 'rea-config-button', disabled: props.busy || !props.configurationWritable || !confirmed || !exported, onClick: function () { run('prepareRuntimeSwitch', { token: versions.token, confirmation: confirmation }) } }, t('准备并切换到此版本')) : null,
-              transition && transition.rollbackAvailable ? h('button', { type: 'button', className: 'rea-config-button', disabled: props.busy || !props.configurationWritable || !confirmed || !exported, onClick: function () { run('rollbackRuntime', { confirmation: confirmation }) } }, t('回退到之前的版本')) : null
+              canPrepare ? h('button', { type: 'button', className: 'rea-config-button', disabled: props.busy || !props.configurationWritable || !confirmed || !exported, onClick: function () { run('prepareRuntimeSwitch', { token: versions.token, confirmation: confirmation }) } }, t('准备并升级到此版本')) : null,
             )
           ) : null,
-          candidate && !versions.updateAvailable ? h('p', { className: 'rea-muted' }, t('当前版本已与官方候选一致，无需切换。')) : null
+          candidate && !versions.updateAvailable ? h('p', { className: 'rea-muted' }, t('当前版本已与官方候选一致，无需升级。')) : null
         )
       )
     }
