@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] — 2026-11-12
+
+Installing no longer turns REA on.
+
+### Changed
+
+- The installer patch inserts the entry with `enabled: false` and the Config
+  default follows, so a fresh install registers the switch without exposing the
+  229 tool definitions or downloading a runtime. The first activation prepares
+  the runtime as before.
+
 ## [0.1.4] — 2026-11-11
 
 Self-healing after a profile configuration reset (DSH upgrades can drop the

@@ -1,7 +1,8 @@
-# Installation enables the complete catalog and prepares an isolated pinned runtime.
+# Installation keeps REA off until the user turns it on; the runtime is prepared
+# on first activation so an install alone downloads nothing.
 - insert:
     - id: rea
       name: dsh-reakit
       config:
-        enabled: true
+        enabled: false
         autoSetup: true

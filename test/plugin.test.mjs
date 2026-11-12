@@ -9,7 +9,8 @@ const settings = { enabled: true, nodePath: '/runtime/node', reaEntry: '/rea/scr
 test('plugin identity and safe defaults', () => {
   assert.equal(name, 'rea')
   assert.deepEqual(inject, ['tools'])
-  assert.equal(Config({}).enabled, true)
+  // Installing does not turn REA on; the user opts in when they need it.
+  assert.equal(Config({}).enabled, false)
   assert.equal(Config({}).autoSetup, true)
   assert.equal(Config({}).showComposerToggle.get(), true)
   assert.equal(Config({ showComposerToggle: false }).showComposerToggle.get(), false)
@@ -75,7 +76,7 @@ test('zero-config activation prepares the runtime without manual paths', async (
     prepare: async (config) => { preparations++; assert.equal(config.nodePath, ''); return { nodeVersion: 'v24.22.1', reaVersion: '6.8.0', config: buildMcpConfig(settings) } },
     bridge: { Config: realBridge.Config, apply: async () => {} },
   })
-  await apply({}, { nodePreference: 'managed' })
+  await apply({}, { nodePreference: 'managed', enabled: true })
   assert.equal(preparations, 1)
   assert.equal(hooks.getRuntimeState().phase, 'ready')
   await hooks.retrySetup()
@@ -95,7 +96,7 @@ test('setup failures are explained by cause, not raw errno', async () => {
       prepare: async () => { throw error },
       bridge: { Config: realBridge.Config, apply: async () => {} },
     })
-    await apply({}, { nodePreference: 'managed' })
+    await apply({}, { nodePreference: 'managed', enabled: true })
     assert.equal(hooks.getRuntimeState().phase, 'error')
     assert.match(hooks.getRuntimeState().message, pattern)
   }
@@ -108,7 +109,7 @@ test('automatic setup failure stays observable and can retry without disabling d
     prepare: async () => { if (++attempts === 1) throw new Error('network unavailable'); return { config: buildMcpConfig(settings) } },
     bridge: { Config: realBridge.Config, apply: async () => {} },
   })
-  await apply({}, { nodePreference: 'managed' })
+  await apply({}, { nodePreference: 'managed', enabled: true })
   assert.equal(hooks.getRuntimeState().phase, 'error')
   assert.match(hooks.getRuntimeState().message, /network unavailable/)
   await hooks.retrySetup()
@@ -143,7 +144,7 @@ test('missing tool registration is not shown as ready and retry replaces the bri
 
 test('partial manual configuration fails rather than downloading silently', async () => {
   const apply = createApply({ prepare: () => assert.fail('must not prepare') })
-  await assert.rejects(apply({}, { nodePath: '/node' }), /both nodePath and reaEntry/)
+  await assert.rejects(apply({}, { enabled: true, nodePath: '/node' }), /both nodePath and reaEntry/)
 })
 
 test('unload aborts preparation before cleanup waits for it', async () => {
@@ -154,7 +155,7 @@ test('unload aborts preparation before cleanup waits for it', async () => {
     register: async () => {},
     prepare: async (_settings, { signal }) => { ready(); return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true })) },
   })
-  const pending = apply(ctx, { nodePreference: 'managed' })
+  const pending = apply(ctx, { nodePreference: 'managed', enabled: true })
   await started
   ctx.fiber.uid = null
   listener(ctx.fiber)

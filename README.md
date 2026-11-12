@@ -46,6 +46,7 @@
 - **Bring your own REA** — if REA is already installed globally, one click detects it and switches the plugin to that copy instead of provisioning a managed runtime; switching back is just as easy
 - **Zero path configuration** — the first start provisions pinned Node 24.22.1 and REA 6.8.0 from official sources with a fully locked dependency graph. No global `npm i -g rea-agents`, and your system Node, shell `PATH` and user `npmrc` are never touched
 - **Complete catalogue, never trimmed** — all 229 REA tools register as `mcp__rea__*`, including capabilities that still need an external analyzer; unconfigured tools are never hidden
+- **Off until you switch it on** — installing registers the plugin and the switch, but REA stays off and nothing is downloaded; the first activation prepares the runtime
 - **One switch, two places** — the composer button and the settings switch drive the same host-accepted state; the UI never keeps an optimistic local copy, and updates propagate across windows
 - **Live status dot** — off, ready, running a tool call (pulsing), just finished (one-shot ring), starting, failed, unknown. Sub-second calls still leave a visible ring
 - **Call-aware safety** — disabling REA while a tool call is in flight is refused by the UI *and* by the host, so a running analysis is never cut in half

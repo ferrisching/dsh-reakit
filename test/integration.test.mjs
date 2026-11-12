@@ -32,7 +32,7 @@ test('config disable during initialization aborts before Cordis waits for apply'
       return new Promise((_resolve, reject) => signal.addEventListener('abort', () => { aborted = true; reject(signal.reason) }, { once: true }))
     },
   }) }
-  const fiber = ctx.plugin(plugin, { nodePreference: 'managed' })
+  const fiber = ctx.plugin(plugin, { nodePreference: 'managed', enabled: true })
   await started
   await fiber.update({ enabled: false })
   assert.equal(aborted, true)
@@ -51,7 +51,7 @@ test('production background initialization leaves the settings owner active and 
       return new Promise((_resolve, reject) => signal.addEventListener('abort', () => { aborted = true; reject(signal.reason) }, { once: true }))
     },
   }) }
-  const fiber = ctx.plugin(plugin, { nodePreference: 'managed' })
+  const fiber = ctx.plugin(plugin, { nodePreference: 'managed', enabled: true })
   await fiber
   await started
   assert.equal(fiber.state, 2)
@@ -81,7 +81,7 @@ test('disposing during a child handshake disposes the child before awaiting appl
     register: async () => {}, bridge,
     inspect: async () => ({ config: buildMcpConfig({ nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs' }) }),
   }) }
-  const fiber = ctx.plugin(plugin, { nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs' })
+  const fiber = ctx.plugin(plugin, { nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs', enabled: true })
   await started
   await fiber.dispose()
   assert.equal(childDisposed, true)
