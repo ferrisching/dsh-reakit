@@ -1,8 +1,8 @@
-<svg width="1120" height="640" viewBox="0 0 1120 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schematic of the dsh-reakit settings panel">
+<svg width="1120" height="720" viewBox="0 0 1120 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schematic of the dsh-reakit settings panel">
   <title>dsh-reakit settings panel (schematic)</title>
-  <desc>A hand-drawn schematic of the REA settings panel: tool switch, model-call guidance, and the collapsed runtime version and optional tool setup sections. It contains no real user interface state.</desc>
+  <desc>A hand-drawn schematic of the current REA settings panel: off / manual / auto switch, per-task tool scope, runtime environment and optional dependency hints. It contains no real user interface state.</desc>
   <defs>
-    <linearGradient id="card" x1="0" y1="0" x2="0" y2="640" gradientUnits="userSpaceOnUse">
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="720" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFFFFF"/>
       <stop offset="1" stop-color="#FBFCFD"/>
     </linearGradient>
@@ -18,7 +18,7 @@
     </style>
   </defs>
 
-  <rect x="0.5" y="0.5" width="1119" height="639" rx="14" fill="url(#card)" stroke="#E5E7EB"/>
+  <rect x="0.5" y="0.5" width="1119" height="719" rx="14" fill="url(#card)" stroke="#E5E7EB"/>
 
   <text class="t h1" x="44" y="58">REA settings</text>
   <text class="t sub" x="44" y="82">Tool wiring, model calls and on-demand setup</text>
@@ -27,34 +27,37 @@
 
   <line x1="44" y1="106" x2="1076" y2="106" stroke="#EEF0F3"/>
 
-  <rect x="44" y="128" width="1032" height="150" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
-  <text class="t h2" x="68" y="162">REA tool switch</text>
-  <text class="t body" x="68" y="186">Shared with the REA button in the composer; one global state.</text>
-  <rect x="980" y="142" width="72" height="28" rx="14" fill="#EAF7F0"/>
-  <text class="t pill" x="999" y="161">On</text>
+  <rect x="44" y="128" width="1032" height="132" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t h2" x="68" y="160">REA tool switch</text>
+  <text class="t body" x="68" y="184">Off → manual → auto; shared with the composer button.</text>
+  <rect x="958" y="142" width="94" height="28" rx="14" fill="#EAF7F0"/>
+  <text class="t pill" x="976" y="161">Auto</text>
 
-  <rect x="68" y="206" width="480" height="52" rx="9" fill="#F7F8FA"/>
-  <text class="t body" x="84" y="228" style="font-weight:600;fill:#1B1F26">When on</text>
-  <text class="t muted" x="84" y="246">229 tools are exposed to the model.</text>
-  <rect x="568" y="206" width="484" height="52" rx="9" fill="#F7F8FA"/>
-  <text class="t body" x="584" y="228" style="font-weight:600;fill:#1B1F26">When off</text>
-  <text class="t muted" x="584" y="246">Tools are removed; the runtime is kept.</text>
+  <rect x="68" y="202" width="480" height="40" rx="9" fill="#F7F8FA"/>
+  <text class="t muted" x="84" y="227">Manual: only the selected families are visible.</text>
+  <rect x="568" y="202" width="484" height="40" rx="9" fill="#F7F8FA"/>
+  <text class="t muted" x="584" y="227">Auto: relevant families are chosen per task.</text>
 
-  <rect x="44" y="296" width="1032" height="86" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
-  <rect x="44" y="296" width="4" height="86" rx="2" fill="#22A06B"/>
-  <text class="t h2" x="68" y="326">Model call guidance</text>
-  <text class="t body" x="68" y="350">If a schema-size error blocks a model call, temporarily disable REA and retry.</text>
-  <text class="t muted" x="68" y="370">Kimi / Moonshot schema caveat · DeepSeek strict · OpenAI strict subsets</text>
+  <rect x="44" y="278" width="1032" height="86" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <rect x="44" y="278" width="4" height="86" rx="2" fill="#22A06B"/>
+  <text class="t h2" x="68" y="308">Model call guidance</text>
+  <text class="t body" x="68" y="332">For oversized tool schemas, narrow the scope automatically first.</text>
+  <text class="t muted" x="68" y="352">Kimi / Moonshot schema caveat · DeepSeek strict · OpenAI strict subsets</text>
 
-  <rect x="44" y="400" width="1032" height="60" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
-  <text class="t body" x="68" y="436" style="font-weight:600;fill:#1B1F26">▸  Runtime version</text>
-  <text class="t muted" x="250" y="436">no auto-upgrade · explicit check only</text>
+  <rect x="44" y="382" width="1032" height="76" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t body" x="68" y="414" style="font-weight:600;fill:#1B1F26">▸ Tool scope</text>
+  <text class="t muted" x="250" y="414">255 tools stay registered; only relevant families enter the request.</text>
+  <text class="t muted" x="68" y="438">Visibility changes apply to the next model step without reconnecting REA.</text>
 
-  <rect x="44" y="472" width="1032" height="60" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
-  <text class="t body" x="68" y="508" style="font-weight:600;fill:#1B1F26">▸  Optional tool setup</text>
-  <text class="t muted" x="252" y="508">optional · copy a scoped AI prompt</text>
+  <rect x="44" y="474" width="1032" height="60" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t body" x="68" y="510" style="font-weight:600;fill:#1B1F26">▸ Runtime environment</text>
+  <text class="t muted" x="270" y="510">REA 6.9.0 · managed Node · forward-only upgrades</text>
 
-  <text class="t muted" x="44" y="592">Operators never leave your machine until you open one of these sections.</text>
+  <rect x="44" y="546" width="1032" height="60" rx="12" fill="#FFFFFF" stroke="#E9ECF0"/>
+  <text class="t body" x="68" y="582" style="font-weight:600;fill:#1B1F26">▸ Optional tool setup</text>
+  <text class="t muted" x="270" y="582">dependency hints for the current version and visible families only</text>
 
-  <rect x="44" y="604" width="1032" height="1" fill="#F1F3F5"/>
+  <text class="t muted" x="44" y="662">Operators never leave your machine until you open one of these sections.</text>
+
+  <rect x="44" y="684" width="1032" height="1" fill="#F1F3F5"/>
 </svg>

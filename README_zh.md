@@ -6,13 +6,13 @@
 
 <div align="center">
   <b>为 DeepSeek Harness 准备的 REA 一体化插件</b><br />
-  自托管 Node 与 REA 运行时、覆盖全部 229 项工具的单一开关、输入框运行状态点、<br />
-  按需配置可选分析器，以及可回退的运行时版本升级<br /><br />
+  托管 Node 与 REA 运行时、255 项工具按需自动选择、<br />
+  关 / 手动 / 自动无感切换，以及只向前的运行时版本升级<br /><br />
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm version" src="https://img.shields.io/npm/v/dsh-reakit" /></a>
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-reakit" /></a>
   <a href="https://github.com/ferrisching/dsh-reakit/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ferrisching/dsh-reakit" /></a>
   <img alt="已在 DSH 0.2.2-rc.2 验证" src="https://img.shields.io/badge/DSH-0.2.2--rc.2-4d6bfe" />
-  <img alt="229 项 REA 工具" src="https://img.shields.io/badge/REA%20tools-229-22a06b" />
+  <img alt="255 项 REA 工具" src="https://img.shields.io/badge/REA%20tools-255-22a06b" />
   <img alt="托管运行时" src="https://img.shields.io/badge/runtime-managed-8250df" />
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
 </div>
@@ -26,7 +26,7 @@
 </div>
 
 
-`dsh-reakit` 把 [REA — Reverse Engineer Anything](https://github.com/morluto/rea) 接进 [DeepSeek Harness](https://www.deepseek.com/)，并接管它周边的一切：自动准备固定版本的 Node 与 REA 运行时，把完整工具目录注册为 `mcp__rea__*`，同时提供单一开关、实时状态点和受支持的升级路径。插件本身不含分析代码——能力来自上游 REA 与你配置的引擎。
+`dsh-reakit` 把 [REA — Reverse Engineer Anything](https://github.com/morluto/rea) 接进 [DeepSeek Harness](https://www.deepseek.com/)，并接管它周边的一切：自动准备固定版本的 Node 与 REA 运行时，把全部 255 项工具注册为 `mcp__rea__*`，并可按当前任务自动选择所需工具族，在不重连 REA 的情况下缩小模型请求。插件提供关 / 手动 / 自动三态开关、实时状态点和只向前的版本升级。插件本身不含分析代码——能力来自上游 REA 与你配置的引擎。
 
 ## 📑 目录
 
@@ -45,15 +45,17 @@
 ## ✨ 功能一览
 
 - **接入已有 REA** —— 本机已经全局装过 REA 时，一键检测并让插件改用那份安装，而不是再准备托管运行时；切回托管同样一键完成
-- **零路径配置** —— 首次启动从官方来源准备固定 Node 24.22.1 与 REA 6.8.0，依赖图完整锁定。无需全局 `npm i -g rea-agents`，且不改动系统 Node、shell `PATH` 与用户 `npmrc`
-- **完整目录，从不裁剪** —— 229 项 REA 工具全部注册为 `mcp__rea__*`；尚未配置外部分析器的工具同样保留，不会被隐藏
+- **零路径配置** —— 首次启动从官方来源准备固定 Node 24.22.1 与 REA 6.9.0，依赖图完整锁定。无需全局 `npm i -g rea-agents`，且不改动系统 Node、shell `PATH` 与用户 `npmrc`
+- **自动选择所需工具** —— 用固定的低成本模型分析最新用户消息，只暴露当前任务相关的工具族；默认保留核心族，涉及移动端或 Web 时才开放对应工具族
+- **完整目录，按需可见** —— 全部 255 项工具保持注册，包括仍需外部分析器的工具；按模型步骤控制可见性，缩小请求而不卸载工具
+- **范围无感切换** —— 关 / 手动 / 自动及工具族变化在下一个模型步骤生效，无需重连 REA，调用中也可切换
 - **安装后默认关闭** —— 安装只注册插件与开关，REA 保持关闭、不下载任何东西；首次开启时才准备运行时
 - **一个开关，两处入口** —— 输入框按钮与设置页开关共用宿主已接受的状态；界面不维护乐观副本，跨窗口自动同步
 - **实时状态点** —— 关闭、就绪、正在调用（脉冲）、刚刚完成（一次性描边环）、启动中、失败、未知；毫秒级调用也会留下可见痕迹
 - **调用中禁止关闭** —— 有工具调用在执行时，界面**与宿主**都会拒绝关闭，正在跑的分析不会被切成两半
 - **按需配置，而非堆砌开关** —— 一个默认折叠的区域、一份针对当前已安装实例的 AI 配置指令，插件自身不安装任何东西
-- **诚实的依赖提示** —— 只有真实 REA 调用返回已审阅的结构化错误码时才提示缺少分析器；同一工具调用成功后提示自动清除
-- **受支持的升级** —— 显式检查更新、隔离准备候选、完整校验锁文件、原子发布，并保留上一代用于回退
+- **诚实的依赖提示** —— 只有真实 REA 调用返回已审阅的结构化错误码时才提示缺少分析器；同一工具调用成功后提示自动清除。可选依赖只按当前版本和可见族显示
+- **受支持的升级** —— 显式检查更新、隔离准备候选、完整校验锁文件、原子发布，只向前升级
 - **界面中英双语** —— 通过官方 locale 服务提供中英词典；后端诊断信息使用英文
 - **对宿主保持克制** —— 按焦点与可见性分级轮询（聚焦 0.5 秒、失焦 2 秒、隐藏 6 秒），因为页面插件没有推送通道；不新增任何自有网络接口
 
@@ -188,7 +190,7 @@ runtime/engine/rea<版本>-<锁摘要12>/          REA 安装 + ready.json
 
 1. `lib/index.js` 声明配置结构、解析托管运行时并注册 `reaComponents/*` Typert 端点
 2. `lib/bootstrap.js` 负责准备运行时：staging 目录、归档摘要校验、`npm ci --ignore-scripts --include=optional`、ready 标记、原子发布
-3. `lib/runtime-versions.js` 实现检查更新与候选准备；`lib/runtime-manager.js` 实现切换、会话静默检查与回退
+3. `lib/runtime-versions.js` 实现检查更新与候选准备；`lib/runtime-manager.js` 实现只向前切换与会话静默检查
 4. `lib/optional-tools.js` 包装官方 `tools/execute` 事件，只统计锁定 REA 目录内的调用，并观察 `tools/result` 以便给出已审阅的依赖提示
 
 **客户端**（`client/client.js`）
@@ -212,7 +214,7 @@ npm pack --ignore-scripts
 │   ├── index.js             插件入口、配置结构、Typert 服务注册
 │   ├── bootstrap.js         托管运行时准备与离线复核
 │   ├── runtime-versions.js  检查更新、候选 staging、锁校验
-│   ├── runtime-manager.js   切换、回退、会话静默检查
+│   ├── runtime-manager.js   只向前切换、会话静默检查
 │   ├── components*.js       可选分析器目录与安装计划
 │   └── optional-tools.js    调用活动统计与依赖提示
 ├── client/client.js         输入框按钮、状态点、设置面板、双语文案
