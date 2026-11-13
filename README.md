@@ -11,7 +11,7 @@
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm version" src="https://img.shields.io/npm/v/dsh-reakit" /></a>
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-reakit" /></a>
   <a href="https://github.com/ferrisching/dsh-reakit/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ferrisching/dsh-reakit" /></a>
-  <img alt="Verified on DSH 0.2.2-rc.1" src="https://img.shields.io/badge/DSH-0.2.2--rc.1-4d6bfe" />
+  <img alt="Verified on DSH 0.2.2-rc.2" src="https://img.shields.io/badge/DSH-0.2.2--rc.2-4d6bfe" />
   <img alt="229 REA tools" src="https://img.shields.io/badge/REA%20tools-229-22a06b" />
   <img alt="Managed runtime" src="https://img.shields.io/badge/runtime-managed-8250df" />
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
@@ -31,6 +31,7 @@
 ## 📑 Table of Contents
 
 - [✨ Features](#-features)
+- [🎯 Tool scope](#-tool-scope)
 - [🚀 Installation](#-installation)
 - [⌨ Usage](#-usage)
 - [⚙ Settings](#-settings)
@@ -55,6 +56,28 @@
 - **Supported upgrades** — an explicit update check reads official metadata, prepares a candidate in isolation, verifies the whole lock, publishes atomically, and leaves the previous generation intact for rollback
 - **Bilingual UI** — English and Chinese dictionaries through the official locale service; backend diagnostics are English
 - **Calm on the wire** — polling is visibility- and focus-aware (0.5 s focused, 2 s unfocused, 6 s hidden) because page plugins get no push channel; no custom network surface is added
+
+## 🎯 Tool scope
+
+Tool definitions travel with every model request, and the full REA 6.9.0 catalogue
+is 255 tools (about 353 KB with the compact schema profile). Settings → REA has one shared switch cycling **off → manual → automatic**; the composer
+button uses the same state. **Tool scope** holds the family selection.
+
+| Mode | Upside | Downside |
+| --- | --- | --- |
+| **Manual** (default) | A stable scope and zero extra model calls. | It can carry families you never use, so the request is bigger. |
+| **Automatic** | Smaller requests that track the task: core families by default, mobile and web families opened when the task calls for them. | One cheap classification call per new task (fixed `deepseek-flash`). Scope changes apply to the next step without reconnecting REA. |
+
+Automatic mode is deliberately conservative:
+
+- the cache key is the **message content**, so a new task invalidates it and the
+  same message is never classified twice;
+- a slow or failed classifier **falls back to the keyword rules** — routing never
+  fails a model step;
+- a manual selection always wins over automatic routing;
+- the full catalogue stays registered; only per-step visibility changes, so scope edits do not reconnect REA.
+
+An empty family list means "advertise everything". Optional dependency hints are probed only when the configuration is expanded and are limited to the current REA version and visible families; nothing is installed or removed automatically.
 
 ## 🚀 Installation
 
@@ -92,7 +115,7 @@ dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
 
 ### Requirements
 
-- Verified on **DSH `0.2.2-rc.1`**; the plugin targets the Cordis 4 bundle API and the official Typert remote surface
+- Verified on **DSH `0.2.2-rc.2`**; the plugin declares no DSH version range, so it is not refused on other releases — the plugin targets the Cordis 4 bundle API and the official Typert remote surface
 - macOS / Linux for the managed runtime path (darwin/linux/win32 are mapped in code; only macOS arm64 is validated on real hardware here)
 - Node is not a prerequisite: the managed runtime supplies its own
 

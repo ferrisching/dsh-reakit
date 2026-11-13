@@ -199,7 +199,59 @@ window.__ModuleLoader__.load({
       "删除后减少约 {size}。REA 引擎会保留，切回时只需重新下载 Node。": "Deleting frees about {size}. The REA engine stays, so switching back only re-downloads Node.",
       "重新安装后占用约 {install}{download}；已装的 REA 引擎会复用，切回托管 Node。": "Installing it again uses about {install}{download}; the installed REA engine is reused and REA returns to the plugin-managed Node.",
       "下载约 {size}": "about {size} to download",
-      "准备并切换到此版本": "准备并切换到此版本"
+      "准备并切换到此版本": "准备并切换到此版本",
+      "工具范围": "Tool scope",
+      "已选 {families} 个族，{tools} 个工具": "{families} families, {tools} tools",
+      "全部 {tools} 个工具": "all {tools} tools",
+      "恢复全部工具": "Restore every tool",
+      "工具定义会随每次模型请求一起发送。只保留需要的工具族，请求体积会明显变小：选的越少，占用越少，模型因工具 Schema 过大而调用失败的概率也越低。全不选表示提供全部工具。": "Tool definitions travel with every model request. Keeping only the families a workflow needs shrinks that payload: the fewer you pick, the less the request carries, and the less likely a call fails because the tool schemas exceed a model limit. Selecting nothing advertises everything.",
+      "当前请求将携带约 {size} 的工具定义（全部为 {full}）。": "This request carries about {size} of tool definitions (all of them: {full}).",
+      "反汇编读写：当前地址、函数、指令、字节与字符串搜索、重命名、注释、书签、交叉引用": "Disassembly read/write: current address, functions, instructions, byte and string search, renames, comments, bookmarks, cross-references",
+      "增强分析：反编译、调用图、ObjC/Swift 类型、原生值追踪、功能与 UI 动作追踪": "Deeper analysis: decompilation, call graphs, ObjC/Swift types, native value tracing, feature and UI-action tracing",
+      "原生二进制与调试：Mach-O/PE/ELF 结构、签名与 plist、gdb/rizin 会话、UI 与调用观测、内核与固件模块": "Native binaries and debugging: Mach-O/PE/ELF structure, signatures and plists, gdb/rizin sessions, UI and call observation, kernel and firmware modules",
+      "工件解析：IL2CPP、Go、Rust、pyc、BEAM、WASM、V8 缓存、SQLite、EVM、APK 签名、抓包与信号解码": "Artifact parsing: IL2CPP, Go, Rust, pyc, BEAM, WASM, V8 code cache, SQLite, EVM, APK signatures, capture and signal decoding",
+      "托管代码：类与成员结构、成员比较、原生边界验证、重建导入": "Managed code: class and member structure, member comparison, native-boundary verification, reconstruction import",
+      "固件：区域检查与提取": "Firmware: region inspection and extraction",
+      "Android 静态分析：APK、JNI 绑定、类与方法查询、引用追踪": "Android static analysis: APK, JNI bindings, class and method lookup, reference tracing",
+      "抓包：客户端探测与捕获文件检查": "Packet capture: client detection and capture-file inspection",
+      "Flutter：构建识别与 Dart AOT 检查": "Flutter: build identification and Dart AOT inspection",
+      "Frida 动态注入：设备与进程枚举、会话、脚本加载": "Frida instrumentation: device and process listing, sessions, script loading",
+      "apktool：Android 资源解码": "apktool: Android resource decoding",
+      "JEB：工程打开、单元列表、反编译": "JEB: project opening, unit listing, decompilation",
+      "ADB 设备操作：包管理、文件推拉、日志、截图、进程与设置": "ADB device control: package management, file push/pull, logs, screenshots, processes and settings",
+      "浏览器：目标与页面检查、Web Bundle 分析、截图与网络捕获": "Browser: target and page inspection, web-bundle analysis, screenshots and network capture",
+      "Electron：fuses、目标枚举、页面检查、JS 应用分析与场景捕获": "Electron: fuses, target listing, page inspection, JS application analysis, scenario capture",
+      "JS 运行时：目标枚举与行为观测": "JavaScript runtime: target listing and behaviour observation",
+      "应用级工作流：分析设置与指南、API 契约、版本比较、重建账本、构建计算机": "Application workflows: analysis settings and guidance, API contracts, version comparison, reconstruction ledger, build computers",
+      "会话与证据：打开二进制/捆绑、证据导入导出、函数与工件比较、未知项管理、导航": "Session and evidence: open binaries and bundles, evidence import/export, function and artifact comparison, unknowns, navigation",
+      "手动选择": "Manual",
+      "按任务自动选择": "Choose per task",
+      "手动：范围稳定、零额外模型调用，但可能带上用不到的工具，请求更大。": "Manual: a stable scope and no extra model calls, but it can carry tools you never use, so the request is bigger.",
+      "自动：请求更小、更贴近任务；代价是每个新任务多一次便宜的分类调用，分类慢或失败会退回关键词规则；范围在下一个模型步骤生效，无需重连。": "Automatic: smaller requests that track the task. Each new task costs one cheap classification call; a slow or failed classifier falls back to keyword rules. The scope applies to the next model step without reconnecting.",
+      "关": "Off",
+      "手动": "Manual",
+      "自动": "Automatic",
+      "当前模式：": "Current mode: ",
+      "点击切换到": "click to switch to ",
+      "；未保存的临时分析和证据请先导出": "; export unsaved analysis and evidence first",
+      "关 → 手动 → 自动循环切换；与输入框中的 REA 按钮共用同一状态，保持同步。": "Cycles off → manual → automatic; the composer REA button shares the same state and stays in sync.",
+      "模式由上方总开关选择：关 / 手动 / 自动。此处勾选是手动范围；自动模式下若你手动修改勾选，将优先使用你的选择。": "The main switch chooses off / manual / automatic. These ticks are the manual scope; editing them in automatic mode gives your selection priority.",
+      "按下方勾选的工具族注册，范围稳定、零额外模型调用。": "Registers the families ticked below: a stable scope and no extra model calls.",
+      "全不选表示提供全部工具，请求体积最大。": "Selecting nothing advertises every tool and produces the largest request.",
+      "按当前任务选择工具族，请求更小、更贴近任务。": "Chooses families for the current task, keeping requests smaller and closer to the work.",
+      "每个新任务多一次便宜的分类调用；范围在下一步生效，无需重连。": "Each new task costs one cheap classification call; the scope applies to the next step without reconnecting.",
+      "当模型因工具集合过大而调用失败时，先用自动模式按任务收窄范围；若仍需特定工具，可切手动并只勾选所需族，或临时关 REA 后重试。": "If a call fails because the tool set is too large, use automatic mode to narrow it for the task. If you still need particular tools, switch to manual and tick only those families, or turn REA off and retry.",
+      "这类错误也可能是 strict 模式对 JSON Schema 子集的校验，不只是体积问题；自动模式不能保证通过所有接口限制。插件不会因接口错误自动关闭 REA。": "These errors can also be strict-mode JSON Schema subset validation, not just size; automatic mode cannot satisfy every provider restriction. REA is never switched off automatically because of an API error.",
+      "运行环境": "Runtime environment",
+      "这里只补外部分析器依赖，不改变上方的工具可见范围。": "This only supplies external analyzer dependencies; it does not change the tool visibility selected above.",
+      "待配置 / 待验证": "Configure / verify",
+      "未检测到": "Not detected",
+      "需要许可": "Licence required",
+      "检测失败": "Detection failed",
+      " · 仅显示当前可见族相关的依赖；不会自动安装或卸载。": " · only dependencies for the currently visible families are shown; nothing is installed or removed automatically.",
+      "当前可见族没有需要额外配置的外部依赖。": "No external dependencies are needed for the currently visible families.",
+      "正在按当前版本和可见工具族检测依赖…": "Checking dependencies for the current version and visible families…",
+      "依赖状态读取失败：": "Could not read dependency status: "
     }
 
     var ZH = {}
@@ -378,9 +430,11 @@ window.__ModuleLoader__.load({
       var view = props.view
       var disabled = busy || !view.available || !view.configurationWritable
       var inflight = Number(view.activity && view.activity.inflight) || 0
-      // Keep the control focusable while a call runs, but block disabling and
-      // explain why instead of silently swallowing the click.
-      var blocked = view.enabled && inflight > 0
+      // Keep the control focusable while a call runs, but block the transition
+      // to off and explain why instead of silently swallowing the click.
+      var mode = viewMode(view)
+      var following = nextMode(mode)
+      var blocked = following === 'off' && inflight > 0
       var running = view.available && view.enabled && view.runtime.phase === 'ready'
       // Call activity is reported only while the runtime is actually serving.
       var active = running && inflight > 0 && !busy
@@ -393,17 +447,17 @@ window.__ModuleLoader__.load({
       // "mcp__<server>__<tool>" -> "<tool>" for a readable hover label.
       var toolLabels = active ? view.activity.tools.map(function (name) { return name.split('__').slice(2).join('__') || name }) : []
       var fullText = busy ? t('REA：切换中…') : !view.available ? t('REA：状态不可用') : active ? t('REA：正在处理工具调用') + (toolLabels.length ? '（' + toolLabels.join('、') + '）' : '') + t('，完成前无法关闭') : 'REA：' + runningText
-      var text = busy ? 'REA…' : !view.available ? 'REA ?' : !view.enabled ? t('REA 关') : view.runtime.phase === 'preparing' ? 'REA…' : view.runtime.phase === 'error' ? 'REA !' : active ? t('REA 用') : t('REA 开')
+      var text = busy ? 'REA…' : !view.available ? 'REA ?' : view.runtime.phase === 'preparing' ? 'REA…' : view.runtime.phase === 'error' ? 'REA !' : active ? t('REA 用') : modeLabel(t, mode, true)
       return h('div', { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }, 'data-rea-quick-toggle': true },
         h('button', {
-          type: 'button', role: 'switch', 'aria-label': t('REA 快捷开关'), 'aria-description': fullText, 'aria-checked': view.enabled, 'aria-busy': active ? true : undefined, 'aria-disabled': blocked ? true : undefined, disabled: disabled,
-          title: blocked ? t('REA 正在处理工具调用，完成后再关闭') : fullText + '；' + (view.enabled ? t('关闭全局 REA 工具；未保存的临时分析和证据请先导出') : t('开启全局 REA 工具')),
+          type: 'button', role: 'switch', 'aria-label': t('REA 快捷开关'), 'aria-description': fullText, 'aria-checked': mode !== 'off', 'aria-busy': active ? true : undefined, 'aria-disabled': blocked ? true : undefined, disabled: disabled,
+          title: blocked ? t('REA 正在处理工具调用，完成后再关闭') : fullText + '；' + t('当前模式：') + modeLabel(t, mode, false) + '；' + t('点击切换到') + modeLabel(t, following, false) + (following === 'off' ? t('；未保存的临时分析和证据请先导出') : ''),
           style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px', boxSizing: 'border-box', flexShrink: 0, font: 'inherit', fontSize: '12px', lineHeight: '16px', height: '28px', minHeight: '28px', minWidth: '56px', padding: '0 8px', border: 'none', borderRadius: '14px', background: 'var(--dsw-alias-button-ghost-active-fill, transparent)', color: 'var(--dsw-alias-label-primary, inherit)', boxShadow: 'inset 0 0 0 1px var(--dsw-alias-button-ghost-active-border, currentColor)', whiteSpace: 'nowrap', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 },
           onClick: function () {
             if (pending.current || disabled) return
             if (blocked) { setError(t('REA 正在处理工具调用，完成后再关闭；现在关闭会中断正在执行的分析')); return }
             pending.current = true; setBusy(true); setError('')
-            Promise.resolve().then(function () { return props.rpc('setEnabled', { enabled: !view.enabled }) }).catch(function (failure) {
+            Promise.resolve().then(function () { return props.rpc('setMode', { mode: following }) }).catch(function (failure) {
               if (alive.current) setError(t('切换失败：') + String(failure.message || failure))
             }).finally(function () {
               notifyConfigurationChanged()
@@ -463,9 +517,10 @@ window.__ModuleLoader__.load({
       }
       var confirmation = { confirmed: confirmed, exported: exported }
       return h('details', { className: 'rea-optional', 'data-rea-runtime-versions': true, open: open, onToggle: function (event) { setOpen(event.currentTarget.open) } },
-        h('summary', null, h('span', { 'aria-hidden': true }, open ? '▾' : '▸'), h('span', null, t('运行时版本')), h('span', { className: 'rea-muted', style: { marginLeft: 'auto', fontWeight: 400 } }, t('不自动升级'))),
+        h('summary', null, h('span', { 'aria-hidden': true }, open ? '▾' : '▸'), h('span', null, t('运行环境')), h('span', { className: 'rea-muted', style: { marginLeft: 'auto', fontWeight: 400 } }, t('不自动升级'))),
         h('div', { className: 'rea-optional-body' },
           h('p', { className: 'rea-muted' }, t('当前 REA ') + (props.runtime.reaVersion || t('未知')) + ' · Node ' + (props.runtime.nodeVersion || t('未知')) + t('。查看状态不联网，点击检查后才会读取官方发布元数据。')),
+          props.nodeEnvironment ? h(NodeEnvironment, props.nodeEnvironment) : null,
           h('div', { className: 'rea-version-actions' }, h('button', { type: 'button', className: 'rea-config-button', disabled: props.busy || !props.configurationWritable, onClick: check }, versions.busy && versions.phase === 'checking' ? t('正在检查…') : t('检查更新'))),
           versions.message ? h('p', { className: 'rea-muted', role: versions.phase === 'error' ? 'alert' : 'status' }, versions.message) : null,
           candidate ? h('div', { className: 'rea-version-grid', 'data-rea-version-candidate': true },
@@ -508,6 +563,20 @@ window.__ModuleLoader__.load({
       return h(Guard, { children: props.children })
     }
 
+    function kilobytes(bytes) { return Math.round(Number(bytes) / 1024) + ' KB' }
+    // One shared three-state switch everywhere: off -> manual -> auto -> off.
+    function viewMode(view) {
+      if (view && ['off', 'manual', 'auto'].includes(view.mode)) return view.mode
+      return view && view.enabled === false ? 'off' : 'manual'
+    }
+    function nextMode(mode) { return mode === 'off' ? 'manual' : mode === 'manual' ? 'auto' : 'off' }
+    function modeLabel(t, mode, prefix) {
+      var text = mode === 'off' ? t('关') : mode === 'auto' ? t('自动') : t('手动')
+      return prefix ? 'REA ' + text : text
+    }
+    function optionalStatusText(status) {
+      return ({ ready: '已就绪', manual: '待配置 / 待验证', missing: '未检测到', license: '需要许可', error: '检测失败' })[status] || status
+    }
     function originLabel(translate, origin) {
       switch (origin) {
         case 'managed': return translate('插件托管')
@@ -519,6 +588,84 @@ window.__ModuleLoader__.load({
         default: return translate('系统 PATH')
       }
     }
+    function ToolScope(props) {
+      var t = makeT(props.t)
+      var row = rowStyle
+      var muted = { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, inherit)' }
+      var column = { display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }
+      var grid = { display: 'flex', flexDirection: 'column', gap: '2px', margin: '8px 0' }
+      var openState = React.useState(false), open = openState[0], setOpen = openState[1]
+      var dataState = React.useState(null), data = dataState[0], setData = dataState[1]
+      var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1]
+      var errorState = React.useState(''), error = errorState[0], setError = errorState[1]
+      var alive = React.useRef(true)
+      React.useEffect(function () { return function () { alive.current = false } }, [])
+      function load() {
+        return props.rpc('toolScope').then(function (value) { if (alive.current) setData(value); return value }).catch(function () { return null })
+      }
+      React.useEffect(function () { load() }, [])
+      function clear() {
+        if (busy) return
+        setBusy(true); setError('')
+        props.rpc('setToolScope', { families: [] }).then(function (value) {
+          if (!alive.current) return
+          setData(value)
+          props.onChanged && props.onChanged()
+        }).catch(function (failure) { if (alive.current) setError(t('操作失败：') + String(failure.message || failure)) })
+          .finally(function () { if (alive.current) setBusy(false) })
+      }
+      function toggle(id) {
+        if (!data || busy) return
+        var next = data.selected.indexOf(id) >= 0
+          ? data.selected.filter(function (item) { return item !== id })
+          : data.selected.concat(id)
+        setBusy(true); setError('')
+        props.rpc('setToolScope', { families: next }).then(function (value) {
+          if (!alive.current) return
+          setData(value)
+          props.onChanged && props.onChanged()
+        }).catch(function (failure) { if (alive.current) setError(t('操作失败：') + String(failure.message || failure)) })
+          .finally(function () { if (alive.current) setBusy(false) })
+      }
+      if (!data) return null
+      var scopeText = data.selected.length
+        ? t('已选 {families} 个族，{tools} 个工具').replace('{families}', String(data.selected.length)).replace('{tools}', String(data.advertisedTools))
+        : t('全部 {tools} 个工具').replace('{tools}', String(data.total))
+      return h('details', { className: 'rea-optional', 'data-rea-tool-scope': true, open: open, onToggle: function (event) { setOpen(event.currentTarget.open) } },
+        h('summary', null, h('span', { 'aria-hidden': true }, open ? '▾' : '▸'), h('span', null, t('工具范围')), h('span', { style: { marginLeft: 'auto', fontWeight: 400, fontSize: '12px' } }, scopeText)),
+        h('div', { className: 'rea-optional-body' },
+          h('p', { style: muted, 'data-rea-tool-routing': true }, t('模式由上方总开关选择：关 / 手动 / 自动。此处勾选是手动范围；自动模式下若你手动修改勾选，将优先使用你的选择。')),
+          h('div', { style: muted, 'data-rea-tool-routing-note': true },
+            h('p', null, t('手动：范围稳定、零额外模型调用，但可能带上用不到的工具，请求更大。')),
+            h('p', null, t('自动：请求更小、更贴近任务；代价是每个新任务多一次便宜的分类调用，分类慢或失败会退回关键词规则；范围在下一个模型步骤生效，无需重连。')),
+          ),
+          h('p', { style: muted }, t('工具定义会随每次模型请求一起发送。只保留需要的工具族，请求体积会明显变小：选的越少，占用越少，模型因工具 Schema 过大而调用失败的概率也越低。全不选表示提供全部工具。')),
+          h('p', { 'data-rea-tool-scope-size': true }, t('当前请求将携带约 {size} 的工具定义（全部为 {full}）。').replace('{size}', kilobytes(data.advertisedBytes)).replace('{full}', kilobytes(data.totalBytes))),
+          h('div', { style: grid },
+            data.families.map(function (family) {
+              var checked = data.selected.indexOf(family.id) >= 0
+              var purpose = family.purpose ? t(family.purpose) : ''
+              return h('label', { key: family.id, style: { display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '6px 0' } },
+                h('input', {
+                  type: 'checkbox', checked: checked, disabled: busy || !props.configurationWritable,
+                  onChange: function () { toggle(family.id) },
+                  'data-rea-tool-family': family.id,
+                }),
+                h('span', null,
+                  h('span', null, family.id + ' · ' + family.tools + ' · ' + kilobytes(family.bytes)),
+                  h('span', { style: { display: 'block', fontSize: '11px', opacity: 0.7, lineHeight: 1.4 } }, purpose),
+                ),
+              )
+            }),
+          ),
+          data.selected.length
+            ? h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { toggle('__none__') }, 'data-rea-tool-scope-clear': true }, t('恢复全部工具'))
+            : null,
+          error ? h('p', { role: 'alert', style: { color: 'var(--dsw-alias-state-error-primary, inherit)', fontSize: '12px' } }, error) : null,
+        ),
+      )
+    }
+
     function NodeEnvironment(props) {
       var t = makeT(props.t)
       var row = rowStyle
@@ -875,6 +1022,8 @@ window.__ModuleLoader__.load({
       var promptOpenState = React.useState(false), promptOpen = promptOpenState[0], setPromptOpen = promptOpenState[1]
       var readErrorState = React.useState(''), readError = readErrorState[0], setReadError = readErrorState[1]
       var optionalOpenState = React.useState(false), optionalOpen = optionalOpenState[0], setOptionalOpen = optionalOpenState[1]
+      var optionalDataState = React.useState(null), optionalData = optionalDataState[0], setOptionalData = optionalDataState[1]
+      var optionalErrorState = React.useState(''), optionalError = optionalErrorState[0], setOptionalError = optionalErrorState[1]
       var lifetime = React.useRef(null), pending = React.useRef(false)
 
       function rpc(method, args) {
@@ -912,6 +1061,15 @@ window.__ModuleLoader__.load({
         return function () { sync.dispose(); controller.abort(); lifetime.current = null }
       }, [])
 
+      React.useEffect(function () {
+        if (!optionalOpen) return
+        setOptionalError('')
+        rpc('optionalDependencies').then(function (value) { setOptionalData(value) }).catch(function (failure) {
+          setOptionalData(null)
+          setOptionalError(t('依赖状态读取失败：') + String(failure.message || failure))
+        })
+      }, [optionalOpen])
+
       function action(work) {
         if (pending.current) return
         pending.current = true; setBusy(true); setError(''); setNotice('')
@@ -938,7 +1096,9 @@ window.__ModuleLoader__.load({
       }
       var disabled = busy || !view || view.available === false || !view.configurationWritable
       var inflight = Number(view && view.activity && view.activity.inflight) || 0
-      var callBlocked = !!(view && view.enabled !== false && inflight > 0)
+      var currentMode = view ? viewMode(view) : 'off'
+      var followingMode = nextMode(currentMode)
+      var callBlocked = !!(view && followingMode === 'off' && inflight > 0)
       var missingDependency = !!(view && view.available !== false && view.enabled === true && view.runtime.phase === 'ready' && view.optionalTools && view.optionalTools.missingDependency === true)
       return h('div', { style: { maxWidth: '780px', overflowWrap: 'anywhere', fontSize: '13px', lineHeight: '1.55' }, 'data-rea-settings': true },
         h('style', { 'data-rea-panel-style': true }, panelCss),
@@ -954,56 +1114,70 @@ window.__ModuleLoader__.load({
             h('div', { className: 'rea-setting-header' },
               h('h4', null, t('REA 工具总开关')),
               h('button', {
-                type: 'button', role: 'switch', className: 'rea-switch', 'aria-label': t('REA 工具总开关'), 'aria-checked': view.enabled, 'aria-disabled': callBlocked ? true : undefined, disabled: disabled,
-                title: callBlocked ? t('REA 正在处理工具调用，完成后再关闭') : (view.enabled ? t('关闭全局 REA 工具') : t('开启全局 REA 工具')),
+                type: 'button', role: 'switch', className: 'rea-switch', 'aria-label': t('REA 工具总开关'), 'aria-checked': currentMode !== 'off', 'aria-disabled': callBlocked ? true : undefined, disabled: disabled,
+                title: callBlocked ? t('REA 正在处理工具调用，完成后再关闭') : t('当前模式：') + modeLabel(t, currentMode, false) + '；' + t('点击切换到') + modeLabel(t, followingMode, false),
                 onClick: function () {
                   if (disabled) return
                   if (callBlocked) { setError(t('REA 正在处理工具调用，完成后再关闭；现在关闭会中断正在执行的分析')); return }
                   action(function () {
                     // The accepted shared state is the receipt. Do not leave a
                     // stale "disabled" notice after another window re-enables REA.
-                    return rpc('setEnabled', { enabled: !view.enabled }).finally(notifyConfigurationChanged)
+                    return rpc('setMode', { mode: followingMode }).finally(notifyConfigurationChanged)
                   })
                 }
-              }, busy ? t('切换中…') : view.enabled ? t('已开启') : t('已关闭'))
+              }, busy ? t('切换中…') : modeLabel(t, currentMode, false))
             ),
-            h('p', { className: 'rea-muted' }, t('与输入框中的 REA 按钮共用同一全局开关，状态保持同步。')),
+            h('p', { className: 'rea-muted' }, t('关 → 手动 → 自动循环切换；与输入框中的 REA 按钮共用同一状态，保持同步。')),
             callBlocked ? h('p', { role: 'status', className: 'rea-muted', 'data-rea-call-lock': true }, t('REA 正在处理 ') + inflight + t(' 个工具调用，完成前无法关闭；关闭会中断正在执行的分析。')) : null,
             h('div', { className: 'rea-impact-grid', 'data-rea-toggle-impact': true },
-              h('div', { className: 'rea-impact-cell' }, h('h4', null, t('开启时')), h('p', null, t('向模型提供完整 REA 工具定义，允许调用逆向分析能力。')), h('p', { className: 'rea-muted' }, t('工具数量、参数 Schema 体积和工具上下文占用会增加。'))),
-              h('div', { className: 'rea-impact-cell' }, h('h4', null, t('关闭时')), h('p', null, t('从后续模型请求中移除 REA 工具定义，模型不能再直接调用 REA。')), h('p', { className: 'rea-muted' }, t('已安装环境保留，再次开启可以复用，不会卸载软件。')))
+              h('div', { className: 'rea-impact-cell' }, h('h4', null, t('关')), h('p', null, t('从后续模型请求中移除 REA 工具定义，模型不能再直接调用 REA。')), h('p', { className: 'rea-muted' }, t('已安装环境保留，再次开启可以复用，不会卸载软件。'))),
+              h('div', { className: 'rea-impact-cell' }, h('h4', null, t('手动')), h('p', null, t('按下方勾选的工具族注册，范围稳定、零额外模型调用。')), h('p', { className: 'rea-muted' }, t('全不选表示提供全部工具，请求体积最大。'))),
+              h('div', { className: 'rea-impact-cell' }, h('h4', null, t('自动')), h('p', null, t('按当前任务选择工具族，请求更小、更贴近任务。')), h('p', { className: 'rea-muted' }, t('每个新任务多一次便宜的分类调用；范围在下一步生效，无需重连。')))
             ),
             h('p', { className: 'rea-muted' }, t('关闭会结束临时分析会话，请先导出未保存证据。工具定义变化仅作用于后续请求，不会回溯删除既有对话。')),
             view.runtime.nodeVersion || view.runtime.reaVersion ? h('p', { className: 'rea-muted' }, (view.runtime.nodeVersion ? 'Node ' + view.runtime.nodeVersion : '') + (view.runtime.reaVersion ? ' · REA ' + view.runtime.reaVersion : '')) : null,
-            view.runtime.phase === 'error' ? h('p', { role: 'alert', style: textStyle }, view.runtime.message) : null
-          ),
-          h(RuntimeVersions, { versions: view.runtimeVersions, runtime: view.runtime, busy: busy, configurationWritable: view.configurationWritable, action: action, rpc: rpc, t: t }),
-          h(NodeEnvironment, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, onChanged: reload }),
-          h(ExistingRuntime, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, installers: view.runtime && view.runtime.installers, hostNodes: view.runtime && view.runtime.hostNodes, onChanged: reload }),
-          h('section', { style: box, 'data-rea-model-impact': true },
-            h('h4', null, t('模型调用提示')),
-            h('p', null, t('当模型因工具参数 Schema 超过允许大小而调用失败时，可考虑临时关闭 REA 后重试；需要使用 REA 时再开启。')),
+            view.runtime.phase === 'error' ? h('p', { role: 'alert', style: textStyle }, view.runtime.message) : null,
+          h('details', { className: 'rea-optional', 'data-rea-model-impact': true },
+            h('summary', null, h('span', null, t('模型调用提示'))),
+            h('p', null, t('当模型因工具集合过大而调用失败时，先用自动模式按任务收窄范围；若仍需特定工具，可切手动并只勾选所需族，或临时关 REA 后重试。')),
             h('p', { className: 'rea-muted' }, t('以下为常见接口/模式示例，不表示这些模型一定失败；具体限制以所选提供方、接口版本和错误消息为准。')),
             h('ul', { style: { paddingLeft: '18px', margin: '8px 0' } },
               h('li', null, t('Kimi / Moonshot：留意完整工具集合过大触发的 Schema 尺寸限制。')),
               h('li', null, t('DeepSeek（strict 模式）：服务端会严格校验指定的 JSON Schema 子集。 '), h('a', { href: 'https://api-docs.deepseek.com/guides/tool_calls/', target: '_blank', rel: 'noopener noreferrer' }, t('官方说明'))),
               h('li', null, t('GPT 系列（OpenAI strict 工具模式）：仅支持 JSON Schema 子集，其他接口模式的规则可能不同。 '), h('a', { href: 'https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create', target: '_blank', rel: 'noopener noreferrer' }, t('官方说明')))
             ),
-            h('p', { className: 'rea-muted' }, t('这类模型接口错误不是缺少分析器依赖；不会自动关闭 REA，也不会自动裁剪工具。'))
+            h('p', { className: 'rea-muted' }, t('这类错误也可能是 strict 模式对 JSON Schema 子集的校验，不只是体积问题；自动模式不能保证通过所有接口限制。插件不会因接口错误自动关闭 REA。'))
+
           ),
-          view.settingsEntryId && props.configForms ? h(ComposerPreference, { form: props.configForms.get(view.settingsEntryId), t: t }) : null
-        ),
-        missingDependency ? h('p', { role: 'status', className: 'rea-note', 'data-rea-dependency-hint': true }, t('本次使用的功能缺少已配置的可选工具依赖，可展开下方“可选工具配置”按需处理。')) : null,
-        h('details', { className: 'rea-optional', 'data-rea-optional-tools': true, open: optionalOpen, onToggle: function (event) { setOptionalOpen(event.currentTarget.open) } },
+          ),
+          h('section', { 'data-rea-tool-scope-section': true },
+            h(ToolScope, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, onChanged: reload }),
+            missingDependency ? h('p', { role: 'status', className: 'rea-note', 'data-rea-dependency-hint': true }, t('本次使用的功能缺少已配置的可选工具依赖，可展开下方“可选工具配置”按需处理。')) : null,
+            h('details', { className: 'rea-optional', 'data-rea-optional-tools': true, open: optionalOpen, onToggle: function (event) { setOptionalOpen(event.currentTarget.open) } },
           h('summary', null, h('span', { 'aria-hidden': true }, optionalOpen ? '▾' : '▸'), h('span', null, t('可选工具配置')), h('span', { className: 'rea-muted', style: { marginLeft: 'auto', fontWeight: 400 } }, t('非必需'))),
           h('div', { className: 'rea-optional-body' },
             h('p', { className: 'rea-muted' }, t('基础 Node / REA 由插件管理，通常无需额外安装。仅在所用功能确实缺少外部依赖时配置，不扫描全部可选组件。')),
+            h('p', { className: 'rea-muted' }, t('这里只补外部分析器依赖，不改变上方的工具可见范围。')),
+            optionalError ? h('p', { role: 'alert' }, optionalError) : null,
+            optionalData ? h('div', { 'data-rea-optional-dependencies': true },
+              h('p', { className: 'rea-muted' }, 'REA ' + (optionalData.reaVersion || t('未知')) + t(' · 仅显示当前可见族相关的依赖；不会自动安装或卸载。')),
+              optionalData.components.length ? optionalData.components.map(function (row) {
+                return h('div', { key: row.id, style: { padding: '6px 0', borderTop: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.16))' }, 'data-rea-optional-dependency': row.id },
+                  h('strong', null, row.name + ' · ' + t(optionalStatusText(row.status))),
+                  h('p', { className: 'rea-muted' }, row.detail),
+                )
+              }) : h('p', { className: 'rea-muted' }, t('当前可见族没有需要额外配置的外部依赖。')),
+            ) : h('p', { className: 'rea-muted' }, t('正在按当前版本和可见工具族检测依赖…')),
             h('button', { type: 'button', className: 'rea-config-button', disabled: busy, onClick: copyPrompt }, t('复制配置指令')),
             h('details', { 'data-rea-config-instructions': true, open: promptOpen, onToggle: function (event) { setPromptOpen(event.currentTarget.open) } },
               h('summary', { style: { cursor: 'pointer', marginTop: '8px' } }, t('查看或手动复制指令')),
               h('pre', { style: textStyle }, optionalToolsPrompt(t))
             )
           )
+        ) ),
+          h(RuntimeVersions, { versions: view.runtimeVersions, runtime: view.runtime, busy: busy, configurationWritable: view.configurationWritable, action: action, rpc: rpc, t: t, nodeEnvironment: { rpc: rpc, t: t, configurationWritable: view.configurationWritable, onChanged: reload } }),
+          h(ExistingRuntime, { rpc: rpc, t: t, configurationWritable: view.configurationWritable, installers: view.runtime && view.runtime.installers, hostNodes: view.runtime && view.runtime.hostNodes, onChanged: reload }),
+          view.settingsEntryId && props.configForms ? h(ComposerPreference, { form: props.configForms.get(view.settingsEntryId), t: t }) : null
         )
       )
     }
@@ -1044,6 +1218,6 @@ window.__ModuleLoader__.load({
         return ctx.slots.register({ name: 'conversation.input.left', id: 'dsh-reakit.quick-toggle', order: 100, locale: LOCALE_NS }, ComposerToggle)
       })
     }
-    return { inject: ['slots', 'connection', 'configForms'], apply: apply, createStatusSync: createStatusSync, __testing: { ExistingRuntime } }
+    return { inject: ['slots', 'connection', 'configForms'], apply: apply, createStatusSync: createStatusSync, __testing: { ExistingRuntime, ToolScope, NodeEnvironment } }
   }
 })

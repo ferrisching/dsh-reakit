@@ -8,7 +8,7 @@ import { buildMcpConfig, REA_NODE_RANGE, REA_VERSION } from '../lib/config.js'
 import { NODE_VERSION, ENGINE_LOCK_SHA256 } from '../lib/bootstrap.js'
 import { checkRuntimeUpdates, selectCompatibleNode, nodeArchive, validateDependencyLock, prepareRuntimeCandidate, inspectManagedRuntime } from '../lib/runtime-versions.js'
 
-const REA = '6.9.0', NODE = '26.13.0', RANGE = '>=24.22.1'
+const REA = '6.10.0', NODE = '26.13.0', RANGE = '>=24.22.1'
 const INTEGRITY = `sha512-${createHash('sha512').update('rea fixture').digest('base64')}`
 const ARCHIVE = Buffer.from('verified Node archive fixture')
 const ARCHIVE_SHA256 = createHash('sha256').update(ARCHIVE).digest('hex')
@@ -45,11 +45,11 @@ function metadataFetch({ latest = REA, checksumLines, deprecated } = {}) {
   } }
 }
 
-test('fixed 6.8.0 / Node baseline and lock remain unchanged', () => {
-  assert.equal(REA_VERSION, '6.8.0')
+test('fixed 6.9.0 / Node baseline and lock remain unchanged', () => {
+  assert.equal(REA_VERSION, '6.9.0')
   assert.equal(NODE_VERSION, '24.22.1')
   assert.equal(REA_NODE_RANGE, '^22.23.4 || ^24.22.1 || >=26.12.1')
-  assert.match(ENGINE_LOCK_SHA256, /^8dc59ed24940/)
+  assert.match(ENGINE_LOCK_SHA256, /^007050bed186/)
 })
 
 test('Node selection filters stable compatible LTS releases and platform artifacts', () => {
@@ -61,7 +61,7 @@ test('Node selection filters stable compatible LTS releases and platform artifac
 
 test('update check reads only official metadata and returns a compatible pair', async () => {
   const f = metadataFetch()
-  const result = await checkRuntimeUpdates({ currentReaVersion: '6.8.0', currentNodeVersion: 'v24.22.1', currentReaNodeRange: REA_NODE_RANGE, platform: process.platform, arch: process.arch, fetchImpl: f.fetch })
+  const result = await checkRuntimeUpdates({ currentReaVersion: '6.9.0', currentNodeVersion: 'v24.22.1', currentReaNodeRange: REA_NODE_RANGE, platform: process.platform, arch: process.arch, fetchImpl: f.fetch })
   assert.equal(result.candidate.rea.version, REA)
   assert.equal(result.candidate.node.version, NODE)
   assert.equal(result.reaUpdateAvailable, true)
@@ -72,11 +72,11 @@ test('update check reads only official metadata and returns a compatible pair', 
 
 test('metadata rejects duplicate checksum entries, prerelease and deprecated candidates', async () => {
   const duplicate = metadataFetch({ checksumLines: `${ARCHIVE_SHA256}  node-v${NODE}-${process.platform}-${process.arch}.tar.gz\n${ARCHIVE_SHA256}  node-v${NODE}-${process.platform}-${process.arch}.tar.gz\n` })
-  await assert.rejects(checkRuntimeUpdates({ currentReaVersion: '6.8.0', currentNodeVersion: 'v24.22.1', platform: process.platform, arch: process.arch, fetchImpl: duplicate.fetch }), /exactly one/)
+  await assert.rejects(checkRuntimeUpdates({ currentReaVersion: '6.9.0', currentNodeVersion: 'v24.22.1', platform: process.platform, arch: process.arch, fetchImpl: duplicate.fetch }), /exactly one/)
   const beta = metadataFetch({ latest: '7.0.0-beta.1' })
-  await assert.rejects(checkRuntimeUpdates({ currentReaVersion: '6.8.0', currentNodeVersion: 'v24.22.1', platform: process.platform, arch: process.arch, fetchImpl: beta.fetch }), /no usable stable/)
+  await assert.rejects(checkRuntimeUpdates({ currentReaVersion: '6.9.0', currentNodeVersion: 'v24.22.1', platform: process.platform, arch: process.arch, fetchImpl: beta.fetch }), /no usable stable/)
   const deprecated = metadataFetch({ deprecated: 'do not use' })
-  const result = await checkRuntimeUpdates({ currentReaVersion: '6.8.0', currentNodeVersion: 'v24.22.1', platform: process.platform, arch: process.arch, fetchImpl: deprecated.fetch })
+  const result = await checkRuntimeUpdates({ currentReaVersion: '6.9.0', currentNodeVersion: 'v24.22.1', platform: process.platform, arch: process.arch, fetchImpl: deprecated.fetch })
   assert.equal(result.candidate.rea.deprecated, 'do not use')
   await assert.rejects(prepareRuntimeCandidate(result.candidate, { runtimeDir: '/tmp/unused' }), /deprecated/)
 })
@@ -200,8 +200,8 @@ test('split directory derivation matches the published layout', async () => {
   const root = '/r/runtime'
   const paths = splitDirectories(
     `${root}/node/darwin-arm64-26.13.0-d38bd5e5a2dd/bin/node`,
-    `${root}/engine/rea6.8.0-8dc59ed24940/node_modules/rea-agents/scripts/rea.mjs`,
+    `${root}/engine/rea6.9.0-8dc59ed24940/node_modules/rea-agents/scripts/rea.mjs`,
   )
   assert.equal(paths.nodeDirectory, `${root}/node/darwin-arm64-26.13.0-d38bd5e5a2dd`)
-  assert.equal(paths.engineDirectory, `${root}/engine/rea6.8.0-8dc59ed24940`)
+  assert.equal(paths.engineDirectory, `${root}/engine/rea6.9.0-8dc59ed24940`)
 })

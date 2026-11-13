@@ -5,6 +5,52 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] — 2026-11-13
+
+No DSH version constraint, and the pinned runtime tracks REA 6.9.0.
+
+### Changed
+
+- The manifest no longer declares `engines.dsh` or any `@deepseek-ai/dsh-*` peer
+  range, so DSH performs no compatibility check and the plugin loads on any
+  release. `engines.node` stays (`>=22`), because that one is about the Node host.
+- The pinned runtime is REA **6.9.0** with Node 24.22.1; the engine dependency lock
+  and its digest follow the release. Its Node requirement is unchanged
+  (`^22.23.4 || ^24.22.1 || >=26.12.1`), so an existing managed Node keeps working.
+- 6.9.0 is larger than 6.8.0 when unpacked (about 189 MB versus 49 MB), so a fresh
+  install and an in-place upgrade both need noticeably more disk.
+- The reviewed tool names follow 6.9.0: **255** tools, 26 of them new and none
+  removed; the catalogue digest in `lib/rea-tool-names.js` is recomputed from it.
+
+- **Scoped dependency hints.** Optional dependencies are detected only when the configuration
+  is expanded, and only for the current REA version and visible tool families.
+  Nothing is installed or removed automatically, and configuration values are never
+  returned to the panel.
+- **Seamless scope switching.** All 255 tools stay registered; a per-step `when` condition
+  decides which families the model sees. Manual/auto and family edits no longer restart
+  REA, even during a tool call. Only switching off tears the bridge down.
+- **Three-state switch.** The main switch and the composer button are one shared control,
+  cycling **off → manual → auto**. The separate mode radios are gone; the family list is
+  the manual scope, and editing it in auto mode still wins. Switching to off during a
+  tool call is refused, while manual ↔ auto stays available.
+- **Task routing (foundation).** `lib/tool-routing.js` decides which families a task needs: the
+  core set by default, mobile and web families when the message signals them, an
+  explicit manual selection always winning, and a classifier hook that can add but
+  never remove coverage. The classifier is pinned to `deepseek-flash`. Wiring it to
+  `agent/pre-step` is now wired: the newest user message is classified by the fixed
+  cheap model, the cache key is the message text (a new task invalidates it), a slow
+  or failed classifier falls back to the keyword rules, and a plan is persisted only
+  while no tool call is in flight. The panel states the trade-offs of both modes.
+- **Tool scope.** A new `toolFamilies` setting narrows what REA advertises: only the
+  selected families reach the model, so the request carries the schemas a workflow
+  needs instead of all 255. Empty keeps the full catalogue. The panel lists every
+  family with its tool count; `REA_MCP_TOOL_FAMILIES` carries the choice.
+
+### Trade-off
+
+- An incompatible DSH now loads instead of being refused, so a breaking change can
+  surface as a runtime error rather than a clear "incompatible" tag.
+
 ## [0.1.5] — 2026-11-12
 
 Installing no longer turns REA on.

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import vm from 'node:vm'
 import { Context } from '@deepseek-ai/cordis'
-import { COMPONENTS, ENV_KEYS, JADX_RELEASE, aiPrompt, createComponentManager, validateSetting } from '../lib/components.js'
+import { COMPONENTS, ENV_KEYS, JADX_RELEASE, aiPrompt, createComponentManager, validateSetting, optionalDependencyRows } from '../lib/components.js'
 import { COMPONENTS_TYPERT, ComponentsController, componentConfiguration, installReviewedJar, registerComponents } from '../lib/components-host.js'
 
 const missing = async () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }) }
@@ -194,8 +194,8 @@ test('official ConfigEditor merges inherited and current values and touches only
   assert.equal(configuration.read().enabled, false)
   assert.equal(configuration.readStrict().toolCallTimeoutMs, 450000)
   const beforeRuntime = structuredClone(entry.options.config)
-  await configuration.runtimePaths({ nodePath: '/managed/node', reaEntry: '/managed/rea/scripts/rea.mjs', managedReaVersion: '6.9.0', managedNodeRange: '>=24.22.1' }, beforeRuntime)
-  assert.equal(entry.options.config.managedReaVersion, '6.9.0')
+  await configuration.runtimePaths({ nodePath: '/managed/node', reaEntry: '/managed/rea/scripts/rea.mjs', managedReaVersion: '6.10.0', managedNodeRange: '>=24.22.1' }, beforeRuntime)
+  assert.equal(entry.options.config.managedReaVersion, '6.10.0')
   assert.equal(entry.options.config.cwd, beforeRuntime.cwd)
   assert.deepEqual(entry.options.config.env, beforeRuntime.env)
   const accepted = structuredClone(entry.options.config)
@@ -227,7 +227,7 @@ test('JAR hash mismatch cleans only its temporary file and never publishes', asy
 })
 
 test('Remote descriptors and controller keep owner authentication and retry diagnostics', async () => {
-  assert.deepEqual(COMPONENTS_TYPERT.invocations.map(item => item.method), ['describe', 'status', 'retrySetup', 'setEnabled', 'detectExisting', 'detectNodes', 'nodeEnvironment', 'setNodeEnvironment', 'adoptExisting', 'installEngineWithHostNode', 'removeManagedNode', 'installManagedNode', 'useManagedRuntime', 'preferManaged', 'managedEnvironment', 'keepManagedEnvironment', 'removeManagedEnvironment', 'migrateRuntime', 'applyRuntimeSplit', 'checkRuntimeUpdates', 'prepareRuntimeSwitch', 'previewInstall', 'install', 'configure'])
+  assert.deepEqual(COMPONENTS_TYPERT.invocations.map(item => item.method), ['describe', 'status', 'retrySetup', 'setEnabled', 'setMode', 'detectExisting', 'detectNodes', 'nodeEnvironment', 'setNodeEnvironment', 'toolScope', 'setToolScope', 'setToolRouting', 'optionalDependencies', 'adoptExisting', 'installEngineWithHostNode', 'removeManagedNode', 'installManagedNode', 'useManagedRuntime', 'preferManaged', 'managedEnvironment', 'keepManagedEnvironment', 'removeManagedEnvironment', 'migrateRuntime', 'applyRuntimeSplit', 'checkRuntimeUpdates', 'prepareRuntimeSwitch', 'previewInstall', 'install', 'configure'])
   assert.ok(COMPONENTS_TYPERT.invocations.every(item => item.service === 'reaComponentsController' && item.namespace === 'reaComponents'))
   const ctx = new Context()
   await ctx.plugin(function controller(inner) { new ComponentsController(inner, { manager: { describe: async () => ({ runtime: { phase: 'error', message: 'setup failed' } }) }, configuration: { writable: () => true, read: () => ({ enabled: true }) }, retrySetup: async () => { throw new Error('download failed') } }) })
@@ -243,7 +243,7 @@ test('Remote descriptors and controller keep owner authentication and retry diag
 test('adopting an existing REA writes the manual pair and can return to the managed runtime', async () => {
   const writes = []
   const configuration = {
-    read: () => ({ enabled: true, nodePath: '/managed/node', reaEntry: '/managed/rea.mjs', managedReaVersion: '6.8.0', managedNodeRange: '^24.0.0' }),
+    read: () => ({ enabled: true, nodePath: '/managed/node', reaEntry: '/managed/rea.mjs', managedReaVersion: '6.9.0', managedNodeRange: '^24.0.0' }),
     runtimePaths: async (next, expected) => { writes.push({ next, expected }); return { saved: true } },
     writable: () => true,
     entryId: () => 'rea',
@@ -286,7 +286,7 @@ test('an existing-REA adoption is refused for a path that is not a package entry
 })
 
 test('a managed runtime is never reported as an adopted installation', async () => {
-  let config = { enabled: true, nodePath: '/managed/node', reaEntry: '/managed/rea.mjs', managedReaVersion: '6.8.0', managedNodeRange: '^24.0.0' }
+  let config = { enabled: true, nodePath: '/managed/node', reaEntry: '/managed/rea.mjs', managedReaVersion: '6.9.0', managedNodeRange: '^24.0.0' }
   const ctx = new Context()
   await ctx.plugin(function controller(inner) {
     new ComponentsController(inner, { manager: {}, configuration: { read: () => config, writable: () => true }, retrySetup: async () => {}, getRuntimeState: () => ({ phase: 'ready' }), versions: { status: () => ({}) } })
@@ -306,7 +306,7 @@ test('adopting a real package writes the chosen Node and entry pair', async () =
   const dir = join(base, 'rea-agents')
   await mkdir(join(dir, 'scripts'), { recursive: true })
   await writeText(join(dir, 'scripts', 'rea.mjs'), 'export {}\n')
-  await writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.9.0', engines: { node: '>=20.0.0' } }))
+  await writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.10.0', engines: { node: '>=20.0.0' } }))
   const entry = join(dir, 'scripts', 'rea.mjs')
   const writes = []
   const configuration = {
@@ -326,7 +326,7 @@ test('adopting a real package writes the chosen Node and entry pair', async () =
     const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
     const result = await owner.reaComponentsController.adoptExisting(entry, process.execPath)
     assert.equal(result.saved, true)
-    assert.equal(result.reaVersion, '6.9.0')
+    assert.equal(result.reaVersion, '6.10.0')
     const { realpath } = await import('node:fs/promises')
     assert.deepEqual(writes.at(-1).next, { nodePath: process.execPath, reaEntry: await realpath(entry), managedReaVersion: '', managedNodeRange: '', keepManagedRuntime: false })
   } finally { await ctx.fiber.dispose() }
@@ -337,9 +337,9 @@ test('the managed environment is measured and removed only when unused', async (
   const settings = { enabled: true, nodePath: '', reaEntry: '', runtimeDir }
   await mkdir(join(runtimeDir, 'node', 'darwin-arm64-26.13.0-abc', 'bin'), { recursive: true })
   await writeText(join(runtimeDir, 'node', 'darwin-arm64-26.13.0-abc', 'bin', 'node'), Buffer.alloc(2048))
-  await mkdir(join(runtimeDir, 'engine', 'rea6.8.0-abc', 'node_modules', 'rea-agents', 'scripts'), { recursive: true })
-  await writeText(join(runtimeDir, 'engine', 'rea6.8.0-abc', 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'), 'export {}\n')
-  await mkdir(join(runtimeDir, 'node-24.22.1-rea-6.8.0-darwin-arm64-abc'), { recursive: true })
+  await mkdir(join(runtimeDir, 'engine', 'rea6.9.0-abc', 'node_modules', 'rea-agents', 'scripts'), { recursive: true })
+  await writeText(join(runtimeDir, 'engine', 'rea6.9.0-abc', 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'), 'export {}\n')
+  await mkdir(join(runtimeDir, 'node-24.22.1-rea-6.9.0-darwin-arm64-abc'), { recursive: true })
   await mkdir(join(runtimeDir, 'npm-cache'), { recursive: true })
   const ctx = new Context()
   await ctx.plugin(function controller(inner) {
@@ -364,16 +364,16 @@ test('the managed environment is measured and removed only when unused', async (
     assert.equal(removed.removed, true)
     assert.equal(removed.bytes, measured.nodeBytes)
     assert.equal(existsSync(join(runtimeDir, 'node')), false, 'the downloaded Node is gone')
-    assert.equal(existsSync(join(runtimeDir, 'engine', 'rea6.8.0-abc')), true, 'the installed REA engine is kept')
-    assert.equal(existsSync(join(runtimeDir, 'node-24.22.1-rea-6.8.0-darwin-arm64-abc')), true, 'combined generations are never deleted blindly')
+    assert.equal(existsSync(join(runtimeDir, 'engine', 'rea6.9.0-abc')), true, 'the installed REA engine is kept')
+    assert.equal(existsSync(join(runtimeDir, 'node-24.22.1-rea-6.9.0-darwin-arm64-abc')), true, 'combined generations are never deleted blindly')
     assert.equal(existsSync(join(runtimeDir, 'npm-cache')), true, 'the npm cache is not part of the environment')
   } finally { await ctx.fiber.dispose(); await rm(runtimeDir, { recursive: true, force: true }) }
 })
 
 test('the kept runtime is reported and the decision is remembered', async () => {
   const runtimeDir = await mkdtemp(join(tmpdir(), 'reakit-keep-'))
-  await mkdir(join(runtimeDir, 'node-24.22.1-rea-6.8.0-darwin-arm64-abc', 'engine'), { recursive: true })
-  await writeText(join(runtimeDir, 'node-24.22.1-rea-6.8.0-darwin-arm64-abc', 'engine', 'ready.json'), '{}')
+  await mkdir(join(runtimeDir, 'node-24.22.1-rea-6.9.0-darwin-arm64-abc', 'engine'), { recursive: true })
+  await writeText(join(runtimeDir, 'node-24.22.1-rea-6.9.0-darwin-arm64-abc', 'engine', 'ready.json'), '{}')
   const settings = { enabled: true, runtimeDir, nodePath: '', reaEntry: '', managedReaVersion: '', managedNodeRange: '', keepManagedRuntime: false }
   const edits = []
   const ctx = new Context()
@@ -398,7 +398,7 @@ test('node choices mark the managed Node and refuse an impossible range', async 
   const dir = join(base, 'rea-agents')
   await mkdir(join(dir, 'scripts'), { recursive: true })
   await writeText(join(dir, 'scripts', 'rea.mjs'), 'export {}\n')
-  const writeRange = range => writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.9.0', engines: { node: range } }))
+  const writeRange = range => writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.10.0', engines: { node: range } }))
   await writeRange('>=20.0.0')
   const entry = join(dir, 'scripts', 'rea.mjs')
   const ctx = new Context()
@@ -516,7 +516,7 @@ test('lightweight owner status never invokes the component probes', async () => 
     const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } } } })
     assert.equal(owner.reaComponentsController.status().runtime.phase, 'preparing')
     state = { phase: 'ready', message: 'connected' }
-    assert.deepEqual(owner.reaComponentsController.status(), { runtime: state, settingsEntryId: null, enabled: true, configurationWritable: true, optionalTools: { missingDependency: false }, activity: { inflight: 0, tools: [] }, runtimeVersions: { phase: 'idle', candidate: null, transition: null } })
+    assert.deepEqual(owner.reaComponentsController.status(), { runtime: state, settingsEntryId: null, enabled: true, mode: 'manual', configurationWritable: true, optionalTools: { missingDependency: false }, activity: { inflight: 0, tools: [] }, runtimeVersions: { phase: 'idle', candidate: null, transition: null } })
   } finally { await ctx.fiber.dispose() }
 })
 
@@ -638,10 +638,10 @@ test('the Node environment can be switched without touching the REA entry', asyn
   const dir = join(base, 'rea-agents')
   await mkdir(join(dir, 'scripts'), { recursive: true })
   await writeText(join(dir, 'scripts', 'rea.mjs'), 'export {}\n')
-  await writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.8.0', engines: { node: '>=20.0.0' } }))
+  await writeText(join(dir, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.9.0', engines: { node: '>=20.0.0' } }))
   const entry = join(dir, 'scripts', 'rea.mjs')
   const writes = []
-  const settings = { enabled: true, nodePath: '/old/node', reaEntry: entry, managedReaVersion: '6.8.0', managedNodeRange: '>=20.0.0' }
+  const settings = { enabled: true, nodePath: '/old/node', reaEntry: entry, managedReaVersion: '6.9.0', managedNodeRange: '>=20.0.0' }
   const ctx = new Context()
   await ctx.plugin(function controller(inner) {
     new ComponentsController(inner, {
@@ -657,7 +657,7 @@ test('the Node environment can be switched without touching the REA entry', asyn
   try {
     const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
     const view = await owner.reaComponentsController.nodeEnvironment()
-    assert.equal(view.reaVersion, '6.8.0')
+    assert.equal(view.reaVersion, '6.9.0')
     assert.ok(view.nodes.length >= 1, 'the host Node is offered')
     const result = await owner.reaComponentsController.setNodeEnvironment(process.execPath)
     assert.equal(result.saved, true)
@@ -673,7 +673,7 @@ test('deleting the managed Node is refused while it is still in use', async () =
   const layout = runtimeLayout(join(root, 'runtime'))
   await mkdir(layout.nodeDirectory, { recursive: true })
   const ctx = new Context()
-  const settings = { enabled: true, runtimeDir: join(root, 'runtime'), nodePath: layout.nodePath, reaEntry: layout.reaEntry, managedReaVersion: '6.8.0', managedNodeRange: '>=20' }
+  const settings = { enabled: true, runtimeDir: join(root, 'runtime'), nodePath: layout.nodePath, reaEntry: layout.reaEntry, managedReaVersion: '6.9.0', managedNodeRange: '>=20' }
   await ctx.plugin(function controller(inner) {
     new ComponentsController(inner, {
       manager: {}, retrySetup: async () => {}, versions: { status: () => ({}) },
@@ -694,9 +694,9 @@ test('the node panel reports the space a reinstall costs', async () => {
   const engine = join(root, 'engine', 'test')
   await mkdir(join(engine, 'scripts'), { recursive: true })
   await writeText(join(engine, 'scripts', 'rea.mjs'), 'export {}\n')
-  await writeText(join(engine, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.8.0', engines: { node: '>=20' } }))
+  await writeText(join(engine, 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.9.0', engines: { node: '>=20' } }))
   const ctx = new Context()
-  const settings = { enabled: true, runtimeDir: join(root, 'runtime'), nodePath: '/opt/homebrew/bin/node', reaEntry: join(engine, 'scripts', 'rea.mjs'), managedReaVersion: '6.8.0', managedNodeRange: '>=20' }
+  const settings = { enabled: true, runtimeDir: join(root, 'runtime'), nodePath: '/opt/homebrew/bin/node', reaEntry: join(engine, 'scripts', 'rea.mjs'), managedReaVersion: '6.9.0', managedNodeRange: '>=20' }
   await ctx.plugin(function controller(inner) {
     new ComponentsController(inner, { manager: {}, retrySetup: async () => {}, versions: { status: () => ({}) }, getRuntimeState: () => ({ phase: 'ready', nodePath: '/opt/homebrew/bin/node', nodeVersion: 'v26.13.0' }), configuration: { read: () => settings, writable: () => true, entryId: () => 'rea' } })
   })
@@ -728,5 +728,107 @@ test('the controller exposes the managed and engine-only installers it is given'
     const result = await owner.reaComponentsController.installManagedNode()
     assert.equal(called, 'managed')
     assert.equal(result.nodePath, '/r/node')
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('the tool scope reports families and persists a subset', async () => {
+  const written = []
+  const ctx = new Context()
+  let settings = { enabled: false }
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, {
+      manager: {}, retrySetup: async () => {}, versions: { status: () => ({}) },
+      getRuntimeState: () => ({ phase: 'disabled' }),
+      configuration: {
+        read: () => settings, writable: () => true, entryId: () => 'rea',
+        toolFamilies: async list => { written.push(list); settings = { ...settings, toolFamilies: list }; return { saved: true } },
+        preferences: async patch => { settings = { ...settings, ...patch }; return { saved: true } },
+      },
+    })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    const before = await owner.reaComponentsController.toolScope()
+    assert.equal(before.mode, 'manual', 'manual routing is the default')
+    assert.equal(before.families.length, 18)
+    assert.equal(before.total, 255)
+    assert.equal(before.advertisedTools, 255, 'nothing selected advertises everything')
+    const after = await owner.reaComponentsController.setToolScope(['native', 'artifact', 'native'])
+    assert.deepEqual(written.at(-1), ['native', 'artifact'], 'duplicates are dropped')
+    assert.equal(after.advertisedTools, 37 + 25)
+    await assert.rejects(owner.reaComponentsController.setToolScope(['nope']), /Unknown tool family/)
+    const auto = await owner.reaComponentsController.setToolRouting('auto')
+    assert.equal(auto.mode, 'auto')
+    assert.equal(settings.toolRouting, 'auto', 'the mode is persisted')
+    await assert.rejects(owner.reaComponentsController.setToolRouting('sometimes'), /auto or manual/)
+    await assert.rejects(owner.reaComponentsController.setToolScope('native'), /list of tool family ids is required/)
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('the shared mode switch maps off/manual/auto in one write', async () => {
+  const ctx = new Context()
+  const writes = []
+  let inflight = 0
+  let settings = { enabled: true, toolRouting: 'auto' }
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, {
+      manager: { describe: async () => ({}) },
+      configuration: {
+        writable: () => true, read: () => settings,
+        mode: async mode => {
+          writes.push(mode)
+          settings = { ...settings, enabled: mode !== 'off', ...(mode === 'off' ? {} : { toolRouting: mode }) }
+          return { saved: true, mode }
+        },
+      },
+      getActivity: () => ({ inflight, tools: [] }),
+      getRuntimeState: () => ({ phase: 'ready' }),
+    })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    assert.equal(owner.reaComponentsController.status().mode, 'auto')
+    await owner.reaComponentsController.setMode('off')
+    assert.equal(settings.enabled, false)
+    assert.equal(settings.toolRouting, 'auto', 'off preserves the previous routing preference')
+    await owner.reaComponentsController.setMode('manual')
+    assert.deepEqual(settings, { enabled: true, toolRouting: 'manual' })
+    await owner.reaComponentsController.setMode('auto')
+    assert.deepEqual(settings, { enabled: true, toolRouting: 'auto' })
+    inflight = 1
+    assert.throws(() => owner.reaComponentsController.setMode('off'), /running 1 tool call/)
+    assert.throws(() => owner.reaComponentsController.setMode('sometimes'), /off, manual or auto/)
+    assert.deepEqual(writes, ['off', 'manual', 'auto'])
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('optional dependencies follow the current version and visible families only', async () => {
+  const rows = [
+    { id: 'jadx', name: 'JADX headless MCP', group: 'Android APK', status: 'missing', detail: 'not detected' },
+    { id: 'adb', name: 'Android platform-tools / adb', group: 'Android devices', status: 'ready', detail: 'version only' },
+    { id: 'tshark', name: 'TShark / capinfos', group: 'PCAP / packets', status: 'missing', detail: 'not detected' },
+    { id: 'builtin', name: 'Built-in static analysis', builtin: true, status: 'ready' },
+  ]
+  const ctx = new Context()
+  let settings = { enabled: true, toolRouting: 'manual', toolFamilies: ['android'], toolFamiliesAuto: [] }
+  await ctx.plugin(function controller(inner) {
+    new ComponentsController(inner, {
+      manager: { describe: async () => ({ runtime: { reaVersion: '6.9.0', nodeVersion: 'v26.13.1' }, components: rows }) },
+      retrySetup: async () => {}, versions: { status: () => ({}) },
+      getRuntimeState: () => ({ phase: 'ready' }),
+      configuration: { read: () => settings, writable: () => true, entryId: () => 'rea' },
+    })
+  })
+  try {
+    const owner = ctx.extend({ invocation: { peer: { principal: { kind: 'owner' } }, signal: new AbortController().signal } })
+    const result = await owner.reaComponentsController.optionalDependencies()
+    assert.equal(result.reaVersion, '6.9.0')
+    assert.deepEqual(result.visibleFamilies, ['android'])
+    assert.deepEqual(result.components.map(row => row.id), ['jadx'])
+    assert.equal(result.components[0].values, undefined, 'configuration values are never returned')
+
+    settings = { ...settings, toolFamilies: [] }
+    const all = await owner.reaComponentsController.optionalDependencies()
+    assert.deepEqual(all.components.map(row => row.id), ['jadx', 'adb', 'tshark'], 'empty scope means every family, excluding built-ins')
   } finally { await ctx.fiber.dispose() }
 })

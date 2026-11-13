@@ -191,10 +191,11 @@ function fixture(t, options = {}) {
         if (value instanceof Error) throw value
         return { ok: true, value }
       }
-      if (endpoint === 'reaComponents/setEnabled') {
-        if (options.setEnabled) return options.setEnabled(payload.args, signal)
-        currentStatus = { ...currentStatus, enabled: payload.args.enabled }
-        return { ok: true, value: { message: 'saved' } }
+      if (endpoint === 'reaComponents/setMode') {
+        if (options.setMode) return options.setMode(payload.args, signal)
+        const mode = payload.args.mode
+        currentStatus = { ...currentStatus, enabled: mode !== 'off', toolRouting: mode === 'off' ? currentStatus.toolRouting : mode, mode }
+        return { ok: true, value: { message: 'saved', mode } }
       }
       assert.fail(`unexpected RPC: ${endpoint}; dock and preference must never describe or probe components`)
     } } },
@@ -314,7 +315,7 @@ for (const present of [false, true]) {
   })
 }
 
-for (const [enabled, phase, short, full] of [[false, 'disabled', 'REA 关', '已关闭'], [true, 'ready', 'REA 开', '已就绪'], [true, 'preparing', 'REA…', '启动中'], [true, 'error', 'REA !', '连接失败']]) {
+for (const [enabled, phase, short, full] of [[false, 'disabled', 'REA 关', '已关闭'], [true, 'ready', 'REA 手动', '已就绪'], [true, 'preparing', 'REA…', '启动中'], [true, 'error', 'REA !', '连接失败']]) {
   test(`compact label keeps full accessible status for enabled=${enabled}, phase=${phase}`, async t => {
     const f = fixture(t, { status: status({ enabled, runtime: { phase } }) }), toolbar = f.dock()
     await flush()
@@ -330,7 +331,7 @@ for (const [enabled, phase, short, full] of [[false, 'disabled', 'REA 关', '已
 
 for (const [label, overrides, expectedDot, expectedLabel] of [
   ['disabled runtime', { enabled: false, runtime: { phase: 'disabled' } }, 'off', 'REA 关'],
-  ['ready and idle', { runtime: { phase: 'ready' }, activity: { inflight: 0, tools: [] } }, 'ready', 'REA 开'],
+  ['ready and idle', { runtime: { phase: 'ready' }, activity: { inflight: 0, tools: [] } }, 'ready', 'REA 手动'],
   ['starting', { runtime: { phase: 'preparing' } }, 'pending', 'REA…'],
   ['connection error', { runtime: { phase: 'error' } }, 'error', 'REA !'],
   ['call in flight', { runtime: { phase: 'ready' }, activity: { inflight: 2, tools: ['open_binary'] } }, 'active', 'REA 用'],
@@ -363,7 +364,7 @@ test('a call that finished between polls is acknowledged briefly, not shown as r
   await flush()
   const button = switchIn(toolbar.render())
   assert.equal(dotOf(button), 'recent')
-  assert.equal(labelOf(button), 'REA 开')
+  assert.equal(labelOf(button), 'REA 手动')
   assert.match(button.props['aria-description'], /刚刚调用过/)
   assert.equal(button.props['aria-busy'], undefined, 'a finished call is not busy')
   const stale = fixture(t, { status: status({ runtime: { phase: 'ready' }, activity: { inflight: 0, tools: [], lastCompletedAt: Date.now() - 60000 } }) }), staleToolbar = stale.dock()
@@ -372,7 +373,7 @@ test('a call that finished between polls is acknowledged briefly, not shown as r
 })
 
 test('composer refuses to disable REA while a tool call is running', async t => {
-  const f = fixture(t, { status: status({ runtime: { phase: 'ready' }, activity: { inflight: 1, tools: ['mcp__rea__open_binary'] } }) }), toolbar = f.dock()
+  const f = fixture(t, { status: status({ mode: 'auto', runtime: { phase: 'ready' }, activity: { inflight: 1, tools: ['mcp__rea__open_binary'] } }) }), toolbar = f.dock()
   await flush()
   const button = switchIn(toolbar.render())
   assert.equal(button.props['aria-disabled'], true)
@@ -380,7 +381,7 @@ test('composer refuses to disable REA while a tool call is running', async t => 
   assert.match(button.props.title, /完成后再关闭/)
   button.props.onClick()
   await flush()
-  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').length, 0, 'no disable request may be sent')
+  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').length, 0, 'no disable request may be sent')
   const alert = alertsIn(toolbar.render())
   assert.match(alert, /正在处理工具调用.*完成后再关闭/)
   assertNoGlobalWrites(f)
@@ -467,7 +468,7 @@ test('form writability gates only the preference, while global authorization ind
   assert.equal(switchIn(dock.render()).props.disabled, false)
   switchIn(dock.render()).props.onClick()
   await flush()
-  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').length, 1)
+  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').length, 1)
   assert.deepEqual(f.sets, [], 'global switch must not save a display preference')
 
   f.publish(preference(true, true))
@@ -479,12 +480,12 @@ test('form writability gates only the preference, while global authorization ind
   disabled.props.onClick()
   assert.equal(checkboxIn(pref.render()).props.disabled, false)
   await flush()
-  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').length, 1)
+  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').length, 1)
 })
 
 for (const enabled of [true, false]) {
   test(`quick switch writes the inverse of enabled=${enabled} once and blocks stale rapid clicks with its pending ref`, async t => {
-    const request = deferred(), f = fixture(t, { status: status({ enabled }), setEnabled: () => request.promise })
+    const request = deferred(), f = fixture(t, { status: status({ enabled }), setMode: () => request.promise })
     const onInput = () => assert.fail('must not touch composer input')
     const inputProps = Object.freeze({ value: '未发送的输入内容', placeholder: 'existing placeholder', disabled: false, onInput })
     const composerProps = Object.freeze({ inputProps, value: inputProps.value, onInput })
@@ -498,9 +499,9 @@ for (const enabled of [true, false]) {
     assert.equal(switchIn(dock.render()).props.disabled, true)
     button.props.onClick()
     await flush()
-    const writes = f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled')
+    const writes = f.calls.filter(call => call.endpoint === 'reaComponents/setMode')
     assert.equal(writes.length, 1)
-    assert.deepEqual(plain(writes[0].payload), { args: { enabled: !enabled } })
+    assert.deepEqual(plain(writes[0].payload), { args: { mode: enabled ? 'auto' : 'manual' } })
     assert.deepEqual(f.sets, [])
     assert.equal(f.calls.some(call => call.endpoint.includes('describe')), false)
     assert.equal(nodes(dock.control.tree, node => node.type === 'input' || node.type === 'textarea').length, 0)
@@ -516,7 +517,7 @@ for (const enabled of [true, false]) {
 
 for (const mode of ['remote-error', 'transport-rejection']) {
   test(`failed switch ${mode} is not retried, broadcasts refresh, and renders its error`, async t => {
-    const f = fixture(t, { setEnabled: () => {
+    const f = fixture(t, { setMode: () => {
       if (mode === 'transport-rejection') throw new Error('write response interrupted')
       return { ok: false, error: { code: 'gateway/service-unavailable', message: 'configuration write interrupted' } }
     } })
@@ -530,7 +531,7 @@ for (const mode of ['remote-error', 'transport-rejection']) {
     assert.ok(f.calls.filter(call => call.endpoint === 'reaComponents/status').length >= 2, 'broadcast must re-read lightweight status')
     f.tick(); f.fire('focus')
     await flush()
-    assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').length, 1)
+    assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').length, 1)
     assert.equal(f.calls.some(call => call.endpoint.includes('describe')), false)
     assert.deepEqual(f.sets, [])
   })
@@ -659,7 +660,7 @@ test('unmount while initial status is pending suppresses late state and timer up
 })
 
 test('unmounted quick view ignores a late write rejection but still broadcasts configuration refresh', async t => {
-  const write = deferred(), f = fixture(t, { setEnabled: () => write.promise }), dock = f.dock()
+  const write = deferred(), f = fixture(t, { setMode: () => write.promise }), dock = f.dock()
   await flush()
   switchIn(dock.render()).props.onClick()
   await flush()
@@ -672,7 +673,7 @@ test('unmounted quick view ignores a late write rejection but still broadcasts c
   assert.equal(f.timers.size, 0)
   assert.equal(f.subscribers.size, 0)
   assert.equal(f.broadcasts.filter(name => name === CONFIG_CHANGED).length, 1)
-  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').length, 1)
+  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').length, 1)
 })
 
 test('unmounted preference unsubscribes and ignores a late rejected save', async t => {
@@ -718,4 +719,52 @@ test('the existing-REA block renders without a host and never throws on missing 
   assert.match(text, /本机没有可用的 Node 与 REA/)
   assert.match(text, /brew install node/)
   assert.match(text, /data-rea-install-choice/)
+})
+
+test('the tool-scope block renders each family with its scope', async () => {
+  // Regression: a helper defined inside one component and used by another made
+  // the whole settings pane render nothing.
+  const source = await readFile(new URL('../client/client.js', import.meta.url), 'utf8')
+  let exported
+  const slots = []
+  const effects = []
+  let cursor = 0
+  const hooks = {
+    createElement: (type, props, ...children) => ({ type, props: props || {}, children }),
+    useState: initial => {
+      const index = cursor++
+      if (slots[index] === undefined) slots[index] = typeof initial === 'function' ? initial() : initial
+      return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value }]
+    },
+    useRef: value => ({ current: value }),
+    useEffect: fn => { effects.push(fn) },
+    useMemo: factory => factory(),
+    useSyncExternalStore: (_subscribe, snapshot) => snapshot(),
+  }
+  const sandbox = { window: { __ModuleLoader__: { load: ({ factory }) => { exported = factory(() => hooks) } } } }
+  vm.runInNewContext(source, sandbox, { filename: 'client.js' })
+  const scope = {
+    selected: ['native'],
+    total: 255,
+    totalBytes: 361055,
+    advertisedTools: 37,
+    advertisedBytes: 54587,
+    families: [
+      { id: 'native', tools: 37, bytes: 54587, purpose: '原生二进制与调试：Mach-O/PE/ELF 结构' },
+      { id: 'session', tools: 24, bytes: 36055, purpose: '会话与证据：证据导入导出、函数比较' },
+    ],
+  }
+  const props = { rpc: async () => scope, t: key => String(key), configurationWritable: true, onChanged: () => {} }
+  // first render resolves the data, the second one draws it
+  cursor = 0; effects.length = 0
+  exported.__testing.ToolScope(props)
+  for (const effect of effects) effect()
+  await new Promise(resolve => setTimeout(resolve, 0))
+  cursor = 0; effects.length = 0
+  const tree = exported.__testing.ToolScope(props)
+  const text = JSON.stringify(tree)
+  assert.match(text, /native · 37 · 53 KB/)
+  assert.match(text, /原生二进制与调试/)
+  assert.match(text, /会话与证据/)
+  assert.match(text, /data-rea-tool-scope-size/)
 })

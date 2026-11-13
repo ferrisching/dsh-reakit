@@ -11,7 +11,7 @@
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm version" src="https://img.shields.io/npm/v/dsh-reakit" /></a>
   <a href="https://www.npmjs.com/package/dsh-reakit"><img alt="npm downloads" src="https://img.shields.io/npm/dm/dsh-reakit" /></a>
   <a href="https://github.com/ferrisching/dsh-reakit/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ferrisching/dsh-reakit" /></a>
-  <img alt="已在 DSH 0.2.2-rc.1 验证" src="https://img.shields.io/badge/DSH-0.2.2--rc.1-4d6bfe" />
+  <img alt="已在 DSH 0.2.2-rc.2 验证" src="https://img.shields.io/badge/DSH-0.2.2--rc.2-4d6bfe" />
   <img alt="229 项 REA 工具" src="https://img.shields.io/badge/REA%20tools-229-22a06b" />
   <img alt="托管运行时" src="https://img.shields.io/badge/runtime-managed-8250df" />
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
@@ -31,6 +31,7 @@
 ## 📑 目录
 
 - [✨ 功能一览](#-功能一览)
+- [🎯 工具范围](#-工具范围)
 - [🚀 安装](#-安装)
 - [⌨ 使用](#-使用)
 - [⚙ 设置](#-设置)
@@ -55,6 +56,25 @@
 - **受支持的升级** —— 显式检查更新、隔离准备候选、完整校验锁文件、原子发布，并保留上一代用于回退
 - **界面中英双语** —— 通过官方 locale 服务提供中英词典；后端诊断信息使用英文
 - **对宿主保持克制** —— 按焦点与可见性分级轮询（聚焦 0.5 秒、失焦 2 秒、隐藏 6 秒），因为页面插件没有推送通道；不新增任何自有网络接口
+
+## 🎯 工具范围
+
+工具定义会随每次模型请求一起发送，REA 6.9.0 的全部目录是 255 个工具（compact
+schema 下约 353 KB）。设置 → REA 的总开关按 **关 → 手动 → 自动** 循环，输入框下方按钮共用同一状态；**工具范围** 保存族选择。
+
+| 模式 | 优点 | 缺点 |
+| --- | --- | --- |
+| **手动**（默认） | 范围稳定、零额外模型调用。 | 可能带上用不到的族，请求更大。 |
+| **自动** | 请求更小、更贴近任务：默认只给核心族，任务涉及移动端或 Web 时才放开对应族。 | 每个新任务多一次便宜的分类调用（固定 `deepseek-flash`）；范围在下一个模型步骤生效，无需重连。 |
+
+自动模式的保守约束：
+
+- 缓存以**消息内容**为键，新任务自动失效，同一消息不会重复分类；
+- 分类慢或失败**退回关键词规则**，路由绝不会让模型步骤失败；
+- 手动选择永远优先于自动判断；
+- 完整目录保持注册，只改变每个模型步骤的可见性，因此切换范围不会重连 REA。
+
+族列表全不选表示提供全部工具。可选依赖只在展开配置时检测，并且只显示与当前 REA 版本和可见族相关的项目；不会自动安装或卸载。
 
 ## 🚀 安装
 
@@ -92,7 +112,7 @@ dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
 
 ### 环境要求
 
-- 已在 **DSH `0.2.2-rc.1`** 上验证；插件依赖 Cordis 4 的 bundle API 与官方 Typert remote 接口
+- 已在 **DSH `0.2.2-rc.2`** 上验证；插件不声明 DSH 版本范围，因此在其他版本上也不会被拒绝——它依赖 Cordis 4 的 bundle API 与官方 Typert remote 接口
 - 托管运行时按 darwin / linux / win32 映射，但只有 macOS arm64 做过真机验收
 - 不要求本机安装 Node：托管运行时自带
 

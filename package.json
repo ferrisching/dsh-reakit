@@ -1,6 +1,6 @@
 {
   "name": "dsh-reakit",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Batteries-included REA integration for DeepSeek Harness: a managed Node and REA runtime, one-switch tool exposure, a live composer status indicator, on-demand optional tool setup, and in-place runtime upgrades with rollback.",
   "type": "module",
   "license": "MIT",
@@ -48,12 +48,11 @@
     }
   },
   "engines": {
-    "node": ">=22",
-    "dsh": ">=0.2.2-rc.1"
+    "node": ">=22"
   },
   "scripts": {
     "test": "node --test --test-timeout=20000 test/*.test.mjs",
-    "check": "node --check lib/index.js && node --check lib/config.js && node --check lib/bootstrap.js && node --check lib/components.js && node --check lib/components-host.js && node --check lib/optional-tools.js lib/existing-rea.js lib/runtime-split.js lib/node-install.js lib/setup-errors.js lib/node-mirror.js lib/node-dist.js && node --check lib/rea-tool-names.js && node --check lib/runtime-versions.js && node --check lib/runtime-manager.js && node --check client/client.js && node --check bin/dsh-reakit.mjs && npm test",
+    "check": "node --check lib/index.js && node --check lib/config.js && node --check lib/tool-routing.js && node --check lib/auto-routing.js && node --check lib/tool-visibility.js && node --check lib/tool-family-map.js && node --check lib/bootstrap.js && node --check lib/components.js && node --check lib/components-host.js && node --check lib/optional-tools.js lib/existing-rea.js lib/runtime-split.js lib/node-install.js lib/setup-errors.js lib/node-mirror.js lib/node-dist.js && node --check lib/rea-tool-names.js && node --check lib/runtime-versions.js && node --check lib/runtime-manager.js && node --check client/client.js && node --check bin/dsh-reakit.mjs && npm test",
     "doctor": "node bin/dsh-reakit.mjs doctor",
     "pack:check": "npm pack --dry-run --ignore-scripts"
   },
@@ -72,12 +71,6 @@
     "managed-runtime",
     "ai-setup"
   ],
-  "peerDependencies": {
-    "@deepseek-ai/cordis": "~4.1.0",
-    "@deepseek-ai/dsh-mcp-client": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.1",
-    "@deepseek-ai/schemastery": "~3.19.0"
-  },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.1.0",
     "@deepseek-ai/dsh-mcp-client": "0.2.2-rc.1",

@@ -145,16 +145,42 @@ test('a Node chosen from the machine is validated as a plain pair, not as a mana
   const engine = join(root, 'engine', 'rea-test')
   await mkdir(join(engine, 'node_modules', 'rea-agents', 'scripts'), { recursive: true })
   await writeText(join(engine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'), 'export {}\n')
-  await writeText(join(engine, 'node_modules', 'rea-agents', 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.8.0', engines: { node: '>=20' } }))
+  await writeText(join(engine, 'node_modules', 'rea-agents', 'package.json'), JSON.stringify({ name: 'rea-agents', version: '6.9.0', engines: { node: '>=20' } }))
   const settings = {
     runtimeDir: root,
     nodePath: '/opt/homebrew/bin/node',
     reaEntry: join(engine, 'node_modules', 'rea-agents', 'scripts', 'rea.mjs'),
-    managedReaVersion: '6.8.0',
+    managedReaVersion: '6.9.0',
     managedNodeRange: '>=20',
   }
   // A machine Node is outside the managed root, so the managed probe declines
   // instead of throwing; the caller falls back to the plain inspection path.
   assert.equal(await inspectManagedRuntime(settings), null)
   await rm(root, { recursive: true, force: true })
+})
+
+test('manual, automatic and family edits do not restart the bridge', async (t) => {
+  const ctx = new Context()
+  t.after(() => ctx.fiber.dispose())
+  let starts = 0, disposals = 0
+  const bridge = { name: 'rea-seamless-scope-bridge', Config: realMcp.Config, apply: child => {
+    starts++
+    child.effect(() => () => { disposals++ })
+  } }
+  const plugin = { name: 'rea-seamless-scope-test', Config, apply: createApply({
+    bridge, register: async () => {},
+    inspect: async () => ({ config: buildMcpConfig({ nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs' }) }),
+  }) }
+  const config = { enabled: true, nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs' }
+  const fiber = ctx.plugin(plugin, config)
+  await fiber
+  const uid = fiber.uid
+  for (const patch of [{ toolRouting: 'auto' }, { toolFamilies: ['native'] }, { toolRouting: 'manual' }, { toolFamilies: ['adb', 'browser'] }, { toolFamiliesAuto: ['adb'] }]) {
+    await fiber.update({ ...config, ...patch })
+    assert.equal(fiber.uid, uid)
+    assert.equal(starts, 1, `scope edit must not restart REA: ${JSON.stringify(patch)}`)
+    assert.equal(disposals, 0)
+  }
+  await fiber.update({ ...config, enabled: false })
+  assert.equal(disposals, 1, 'only the off switch tears down REA')
 })

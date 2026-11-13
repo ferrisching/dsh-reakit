@@ -128,3 +128,29 @@ test('CLI rejects unknown or duplicate options with nonzero status', async () =>
     await assert.rejects(exec(process.execPath, ['bin/dsh-reakit.mjs', ...args]), { code: 1 })
   }
 })
+
+test('the MCP process always lists every family; scope is enforced at registration', async () => {
+  const { buildMcpConfig, TOOL_FAMILIES, TOOL_FAMILY_IDS } = await import('../lib/config.js')
+  const base = { nodePath: '/node', reaEntry: '/engine/scripts/rea.mjs' }
+  // No selection advertises every family.
+  assert.equal(buildMcpConfig(base).env.REA_MCP_TOOL_FAMILIES, undefined)
+  // A subset is validated but never sent to REA, so changing it cannot restart anything.
+  const config = buildMcpConfig({ ...base, toolFamilies: ['native', 'artifact', 'native'], env: { REA_MCP_TOOL_FAMILIES: 'native' } })
+  assert.equal(config.env.REA_MCP_TOOL_FAMILIES, undefined)
+  // Unknown ids fail before REA starts, so the cause names the offender.
+  assert.throws(() => buildMcpConfig({ ...base, toolFamilies: ['native', 'nope'] }), /Unknown tool family: nope/)
+  assert.throws(() => buildMcpConfig({ ...base, toolFamilies: 'native' }), /must be a list/)
+  // The published family table must stay consistent with itself.
+  assert.equal(TOOL_FAMILY_IDS.length, 18)
+  assert.equal(TOOL_FAMILIES.reduce((total, family) => total + family.tools, 0), 255)
+  assert.equal(new Set(TOOL_FAMILY_IDS).size, TOOL_FAMILY_IDS.length)
+})
+
+test('every tool family states what it covers', async () => {
+  const { TOOL_FAMILIES } = await import('../lib/config.js')
+  for (const family of TOOL_FAMILIES) {
+    assert.equal(typeof family.purpose, 'string', `${family.id} needs a scope`)
+    assert.ok(family.purpose.length >= 10, `${family.id} scope is too short`)
+    assert.ok(family.purpose.includes('：'), `${family.id} scope should read as "what: details"`)
+  }
+})

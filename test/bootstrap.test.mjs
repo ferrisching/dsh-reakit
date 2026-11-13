@@ -15,7 +15,7 @@ async function workspace(t) {
   t.after(async()=>{assert.ok(resolve(base).startsWith(resolve(prefix)));await rm(base,{recursive:true,force:true})})
   return {base,root:join(base,'managed')}
 }
-const inspect=async settings=>({nodeVersion:'v24.22.1',reaVersion:'6.8.0',config:buildMcpConfig(settings)})
+const inspect=async settings=>({nodeVersion:'v24.22.1',reaVersion:'6.9.0',config:buildMcpConfig(settings)})
 async function install(layout) {
   await mkdir(dirname(layout.nodePath),{recursive:true})
   await mkdir(dirname(layout.reaEntry),{recursive:true})
@@ -95,7 +95,7 @@ test('failed setup never publishes and may be retried without deleting old work'
   await assert.rejects(ensureRuntime({runtimeDir:root},{inspect,install:async()=>{throw new Error('network unavailable')}}),/network unavailable/)
   await assert.rejects(access(runtimeLayout(root).nodeDirectory),{code:'ENOENT'})
   await assert.rejects(access(join(root,'.setup.lock')),{code:'ENOENT'})
-  assert.equal((await ensureRuntime({runtimeDir:root},{inspect,install})).reaVersion,'6.8.0')
+  assert.equal((await ensureRuntime({runtimeDir:root},{inspect,install})).reaVersion,'6.9.0')
 })
 
 test('concurrent setup has exactly one installer and independently rechecks ready state',async t=>{
@@ -157,7 +157,7 @@ test('removing only the Node part is repaired by reusing the installed engine',a
   let installs=0
   const restored=await ensureRuntime(settings,{inspect,install:async(staged)=>{installs++;assert.equal(staged.reuseEngine,true,'engine is reused');await mkdir(dirname(staged.nodePath),{recursive:true});await writeFile(staged.nodePath,'simulated pinned Node')}})
   assert.equal(installs,1)
-  assert.equal(restored.reaVersion,'6.8.0')
+  assert.equal(restored.reaVersion,'6.9.0')
   assert.equal(await readFile(layout.engineMarker,'utf8'),engineMarkerBefore,'engine marker is untouched')
   await assert.doesNotReject(access(layout.nodePath))
   await assert.doesNotReject(access(layout.reaEntry))
@@ -256,18 +256,29 @@ test('a prepared runtime is rediscovered when the configuration forgot its paths
   const { discoverInstalledRuntime } = await import('../lib/index.js')
   const root = await mkdtemp(join(tmpdir(), 'reakit-rediscover-'))
   const nodeId = 'darwin-arm64-26.13.0-abc123456789'
-  const engineId = 'rea6.8.0-def123456789'
+  const engineId = 'rea6.9.0-def123456789'
   await mkdir(join(root, 'node', nodeId, 'bin'), { recursive: true })
   await mkdir(join(root, 'engine', engineId, 'node_modules', 'rea-agents', 'scripts'), { recursive: true })
   await writeFile(join(root, 'node', nodeId, 'ready.json'), JSON.stringify({ formatVersion: 1, nodeVersion: '26.13.0' }))
-  await writeFile(join(root, 'engine', engineId, 'ready.json'), JSON.stringify({ formatVersion: 1, reaVersion: '6.8.0', nodeRange: '>=26.12.1' }))
+  await writeFile(join(root, 'engine', engineId, 'ready.json'), JSON.stringify({ formatVersion: 1, reaVersion: '6.9.0', nodeRange: '>=26.12.1' }))
   const found = await discoverInstalledRuntime({ runtimeDir: root })
-  assert.equal(found.config.managedReaVersion, '6.8.0')
+  assert.equal(found.config.managedReaVersion, '6.9.0')
   assert.equal(found.config.managedNodeRange, '>=26.12.1')
   assert.ok(found.nodePath.includes(nodeId))
   assert.ok(found.reaEntry.includes(engineId))
   // A Node that does not satisfy the engine range is not offered.
-  await writeFile(join(root, 'engine', engineId, 'ready.json'), JSON.stringify({ formatVersion: 1, reaVersion: '6.8.0', nodeRange: '>=99' }))
+  await writeFile(join(root, 'engine', engineId, 'ready.json'), JSON.stringify({ formatVersion: 1, reaVersion: '6.9.0', nodeRange: '>=99' }))
   assert.equal(await discoverInstalledRuntime({ runtimeDir: root }), null)
   await rm(root, { recursive: true, force: true })
+})
+
+test('the manifest declares no DSH version constraint', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+  // DSH only refuses a plugin whose manifest declares engines.dsh or an
+  // @deepseek-ai/dsh-* peer range; declaring neither imposes no constraint.
+  assert.equal(manifest.engines && manifest.engines.dsh, undefined)
+  const peers = Object.keys(manifest.peerDependencies || {})
+  assert.deepEqual(peers.filter(name => name === '@deepseek-ai/cordis' || name.startsWith('@deepseek-ai/dsh-')), [])
+  // The Node requirement stays, because that one is about npm, not DSH.
+  assert.equal(manifest.engines.node, '>=22')
 })

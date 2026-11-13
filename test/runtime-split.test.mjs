@@ -8,7 +8,7 @@ import { splitLegacyGeneration, readSplitRuntime, splitPaths, planSplitRuntime, 
 
 const sha256 = v => createHash('sha256').update(v).digest('hex')
 
-async function legacyGeneration(root, { nodeVersion = '26.13.0', reaVersion = '6.8.0', lock = 'a'.repeat(64) } = {}) {
+async function legacyGeneration(root, { nodeVersion = '26.13.0', reaVersion = '6.9.0', lock = 'a'.repeat(64) } = {}) {
   const dir = join(root, `node-${nodeVersion}-rea-${reaVersion}-darwin-arm64-${lock.slice(0, 12)}`)
   const nodeDir = join(dir, `node-v${nodeVersion}-darwin-arm64`)
   await mkdir(join(nodeDir, 'bin'), { recursive: true })
@@ -28,7 +28,7 @@ test('a legacy generation is split, verified and then removed', async () => {
   const result = await splitLegacyGeneration({ root, generation, platform: 'darwin', arch: 'arm64', run: fakeRun })
   assert.equal(result.freedFromLegacy, true)
   await assert.rejects(stat(generation), /ENOENT/, 'legacy generation is gone')
-  const ready = await readSplitRuntime(result.paths, { nodeVersion: '26.13.0', reaVersion: '6.8.0' })
+  const ready = await readSplitRuntime(result.paths, { nodeVersion: '26.13.0', reaVersion: '6.9.0' })
   assert.ok(ready, 'split runtime verifies')
   assert.equal((await readdir(join(root, 'node'))).length, 1)
   assert.equal((await readdir(join(root, 'engine'))).length, 1)
@@ -59,7 +59,7 @@ test('an existing split target is never overwritten', async () => {
 })
 
 test('split paths keep node and engine separate', () => {
-  const paths = splitPaths('/r', { platform: 'darwin', arch: 'arm64', nodeVersion: '26.13.0', archiveSha256: 'c'.repeat(64), reaVersion: '6.8.0', lockSha256: 'd'.repeat(64) })
+  const paths = splitPaths('/r', { platform: 'darwin', arch: 'arm64', nodeVersion: '26.13.0', archiveSha256: 'c'.repeat(64), reaVersion: '6.9.0', lockSha256: 'd'.repeat(64) })
   assert.match(paths.nodeDirectory, /\/r\/node\//)
   assert.match(paths.engineDirectory, /\/r\/engine\//)
   assert.match(paths.nodePath, /\/bin\/node$/)
@@ -76,7 +76,7 @@ test('the dry run maps legacy generations without touching anything', async () =
   const [entry] = plan.mapped
   assert.equal(entry.planable, true)
   assert.match(entry.nodeDirectory, /\/node\/darwin-arm64-26\.13\.0-/)
-  assert.match(entry.engineDirectory, /\/engine\/rea6\.8\.0-/)
+  assert.match(entry.engineDirectory, /\/engine\/rea6\.9\.0-/)
   assert.ok(entry.nodePath.endsWith('/bin/node'))
   assert.ok(entry.reaEntry.endsWith('rea-agents/scripts/rea.mjs'))
   assert.deepEqual(entry.conflicts, [])

@@ -88,7 +88,7 @@ function hookHarness() {
 function status(secret = SECRET) {
   return {
     enabled: true, configurationWritable: true, settingsEntryId: ENTRY_ID,
-    runtime: { phase: 'ready', nodePath: PRIVATE_PATH, token: secret, reaVersion: '6.8.0', nodeVersion: 'v24.22.1' },
+    runtime: { phase: 'ready', nodePath: PRIVATE_PATH, token: secret, reaVersion: '6.9.0', nodeVersion: 'v24.22.1' },
     runtimeVersions: { phase: 'idle', candidate: null, transition: null },
     env: { API_TOKEN: secret },
     components: Array.from({ length: 23 }, (_, index) => ({
@@ -141,9 +141,13 @@ function fixture(t, options = {}) {
     connection: { rpc: { async call(channel, endpoint, payload, signal) {
       assert.equal(channel, '/api'); calls.push({ endpoint, payload, signal })
       if (endpoint === 'reaComponents/status') return { ok: true, value: await host.current }
-      if (endpoint === 'reaComponents/setEnabled') {
-        host.current = { ...host.current, enabled: payload.args.enabled }
-        return { ok: true, value: { message: 'fixture saved' } }
+      if (endpoint === 'reaComponents/setMode') {
+        const mode = payload.args.mode
+        host.current = { ...host.current, enabled: mode !== 'off', toolRouting: mode === 'off' ? host.current.toolRouting : mode, mode }
+        return { ok: true, value: { message: 'fixture saved', mode } }
+      }
+      if (endpoint === 'reaComponents/optionalDependencies') {
+        return { ok: true, value: { reaVersion: '6.9.0', visibleFamilies: [], components: [] } }
       }
       if (endpoint === 'reaComponents/checkRuntimeUpdates') {
         const value = options.versionResult || { phase: 'checked', candidate: null, updateAvailable: false, message: 'checked' }
@@ -170,7 +174,7 @@ function fixture(t, options = {}) {
   t.after(result.dispose)
   return result
 }
-const assertStatusOnly = f => assert.ok(f.calls.every(call => call.endpoint === 'reaComponents/status'), `unexpected RPCs: ${f.calls.map(call => call.endpoint)}`)
+const assertStatusOnly = f => assert.ok(f.calls.every(call => ['reaComponents/status', 'reaComponents/optionalDependencies'].includes(call.endpoint)), `unexpected RPCs: ${f.calls.map(call => call.endpoint)}`)
 
 function assertMinimal(tree) {
   assert.equal(section(tree).type, 'details')
@@ -229,15 +233,15 @@ test('settings explain both tool exposure directions and give conditional model-
   const f = fixture(t), panel = f.panel()
   await flush(); panel.render()
   const impact = text(one(panel.tree, node => node.props?.['data-rea-toggle-impact']))
-  assert.match(impact, /向模型提供完整 REA 工具定义/)
+  assert.match(impact, /按下方勾选的工具族注册/)
   assert.match(impact, /从后续模型请求中移除 REA 工具定义/)
   assert.match(impact, /已安装环境保留/)
   const note = one(panel.tree, node => node.props?.['data-rea-model-impact'])
-  assert.match(text(note), /当模型因工具参数 Schema 超过允许大小.*可考虑临时关闭 REA/)
+  assert.match(text(note), /当模型因工具集合过大.*先用自动模式/)
   assert.match(text(note), /Kimi \/ Moonshot/)
   assert.match(text(note), /DeepSeek（strict 模式）/)
   assert.match(text(note), /GPT 系列（OpenAI strict 工具模式）/)
-  assert.match(text(note), /不会自动关闭 REA/)
+  assert.match(text(note), /不会因接口错误自动关闭 REA/)
   assert.equal(nodes(note, node => node.type === 'a').length, 2)
   assertStatusOnly(f)
 })
@@ -247,7 +251,7 @@ function mountRuntimeVersions(f, panel) {
 }
 
 test('settings switch refuses to disable REA while a tool call is running', async t => {
-  const busy = { ...status(), activity: { inflight: 2, tools: ['mcp__rea__open_binary'] } }
+  const busy = { ...status(), mode: 'auto', activity: { inflight: 2, tools: ['mcp__rea__open_binary'] } }
   const f = fixture(t, { status: busy }), panel = f.panel()
   await flush(); panel.render()
   assert.equal(nodes(panel.tree, node => node.props?.['data-rea-call-lock']).length, 1)
@@ -257,7 +261,7 @@ test('settings switch refuses to disable REA while a tool call is running', asyn
   assert.match(toggle.props.title, /完成后再关闭/)
   toggle.props.onClick()
   await flush(); panel.render()
-  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').length, 0)
+  assert.equal(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').length, 0)
   assert.match(alerts(panel.tree), /正在处理工具调用.*完成后再关闭/)
   assert.deepEqual(f.writes, [])
   assertStatusOnly(f)
@@ -303,7 +307,7 @@ test('only the update button checks metadata; preparation requires both explicit
   const versionResult = {
     phase: 'checked', token: 'candidate-token', updateAvailable: true,
     candidate: {
-      rea: { version: '6.9.0', nodeRange: '>=24.22.1', integrity: 'sha512-review', source: 'https://www.npmjs.com/package/rea-agents/v/6.9.0' },
+      rea: { version: '6.10.0', nodeRange: '>=24.22.1', integrity: 'sha512-review', source: 'https://www.npmjs.com/package/rea-agents/v/6.10.0' },
       node: { version: '26.13.0', lts: 'Krypton', source: 'https://nodejs.org/dist/v26.13.0/', archive: { sha256: 'a'.repeat(64) } }, platform: 'darwin', arch: 'arm64',
     },
   }
@@ -331,7 +335,7 @@ test('only the update button checks metadata; preparation requires both explicit
 })
 
 test.skip('runtime rollback was removed; version management only moves forward', async t => {
-  const initial = { ...status(), runtimeVersions: { phase: 'ready', candidate: null, transition: { state: 'ready', from: { reaVersion: '6.8.0', nodeVersion: 'v24.22.1' }, to: { reaVersion: '6.9.0', nodeVersion: 'v26.13.0' }, rollbackAvailable: true } } }
+  const initial = { ...status(), runtimeVersions: { phase: 'ready', candidate: null, transition: { state: 'ready', from: { reaVersion: '6.9.0', nodeVersion: 'v24.22.1' }, to: { reaVersion: '6.10.0', nodeVersion: 'v26.13.0' }, rollbackAvailable: true } } }
   const f = fixture(t, { status: initial }), panel = f.panel()
   await flush(); panel.render()
   const versions = mountRuntimeVersions(f, panel)
@@ -352,7 +356,7 @@ function mountToggle(f) {
 }
 
 test('settings and composer switch synchronize the same accepted global state both ways', async t => {
-  const f = fixture(t), panel = f.panel(), toggle = mountToggle(f)
+  const f = fixture(t, { status: { ...status(), mode: 'auto' } }), panel = f.panel(), toggle = mountToggle(f)
   await flush(); panel.render(); toggle.render()
   switchIn(toggle.control.tree).props.onClick()
   await flush(); panel.render(); toggle.render()
@@ -362,7 +366,7 @@ test('settings and composer switch synchronize the same accepted global state bo
   await flush(); panel.render(); toggle.render()
   assert.equal(switchIn(panel.tree).props['aria-checked'], true)
   assert.equal(switchIn(toggle.control.tree).props['aria-checked'], true)
-  assert.deepEqual(f.calls.filter(call => call.endpoint === 'reaComponents/setEnabled').map(call => call.payload.args.enabled), [false, true])
+  assert.deepEqual(f.calls.filter(call => call.endpoint === 'reaComponents/setMode').map(call => call.payload.args.mode), ['off', 'manual'])
   assert.deepEqual(f.writes, [])
 })
 
@@ -373,7 +377,7 @@ test('cross-window notifications refresh host snapshots and close channels on un
     postMessage(data) { messages.push(data); for (const channel of channels) if (channel !== this && channel.name === this.name) channel.dispatchEvent(new MessageEvent('message', { data })) }
     close() { channels.delete(this) }
   }
-  const host = { current: status() }, a = fixture(t, { host, BroadcastChannel: Channel }), b = fixture(t, { host, BroadcastChannel: Channel })
+  const host = { current: { ...status(), mode: 'auto' } }, a = fixture(t, { host, BroadcastChannel: Channel }), b = fixture(t, { host, BroadcastChannel: Channel })
   const toggle = mountToggle(a), panel = b.panel()
   await flush(); toggle.render(); panel.render()
   switchIn(toggle.control.tree).props.onClick()
@@ -468,14 +472,14 @@ test('AI instructions preserve disabled REA and never enable it to prepare or ve
 })
 
 test('remaining panel toggle and visibility preference retain their independent writes', async t => {
-  const f = fixture(t), panel = f.panel()
+  const f = fixture(t, { status: { ...status(), mode: 'auto' } }), panel = f.panel()
   await flush(); panel.render()
   switchIn(panel.tree).props.onClick()
   await flush(); panel.render()
   const writes = f.calls.filter(call => call.endpoint !== 'reaComponents/status')
   assert.equal(writes.length, 1)
-  assert.equal(writes[0].endpoint, 'reaComponents/setEnabled')
-  assert.deepEqual(plain(writes[0].payload), { args: { enabled: false } })
+  assert.equal(writes[0].endpoint, 'reaComponents/setMode')
+  assert.deepEqual(plain(writes[0].payload), { args: { mode: 'off' } })
   assert.equal(switchIn(panel.tree).props['aria-checked'], false)
   assert.doesNotMatch(text(panel.tree), /fixture saved|已提交关闭/, 'accepted state replaces transient toggle notices')
   const preference = f.mount(one(panel.tree, node => typeof node.type === 'function' && node.props.form === f.form))

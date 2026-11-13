@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { detectExistingRea, inspectExistingRea, verifyAdoption, candidateRoots, detectNodes, requiredNodeRange, profilesUsingManagedRuntime, currentProfileContext } from '../lib/existing-rea.js'
 
 /** Build a fake global install: <root>/rea-agents/{package.json,scripts/rea.mjs}. */
-async function install({ root, version = '6.8.0', range = '^22.23.4 || ^24.22.1 || >=26.12.1', entry = true, name = 'rea-agents' }) {
+async function install({ root, version = '6.9.0', range = '^22.23.4 || ^24.22.1 || >=26.12.1', entry = true, name = 'rea-agents' }) {
   const dir = join(root, 'rea-agents')
   await mkdir(join(dir, 'scripts'), { recursive: true })
   await writeFile(join(dir, 'package.json'), JSON.stringify({ name, version, engines: { node: range } }))
@@ -20,7 +20,7 @@ test('a global install is detected and reported usable', async () => {
   const detected = await detectExistingRea({ roots: [base], nodeVersion: 'v26.13.0' })
   assert.equal(detected.candidates.length, 1)
   const candidate = detected.candidates[0]
-  assert.equal(candidate.reaVersion, '6.8.0')
+  assert.equal(candidate.reaVersion, '6.9.0')
   assert.equal(candidate.entry, entry)
   assert.equal(candidate.usable, true)
   assert.equal(candidate.reason, '')
@@ -52,10 +52,10 @@ test('directories that are not a rea-agents package are ignored', async () => {
 test('a valid install sorts before an unusable one', async () => {
   const base = await mkdtemp(join(tmpdir(), 'reakit-existing-'))
   await install({ root: join(base, 'a'), version: '6.5.0', range: '^18.0.0' })
-  await install({ root: join(base, 'b'), version: '6.8.0' })
+  await install({ root: join(base, 'b'), version: '6.9.0' })
   const detected = await detectExistingRea({ roots: [join(base, 'a'), join(base, 'b')], nodeVersion: 'v26.13.0' })
   assert.equal(detected.candidates[0].usable, true)
-  assert.equal(detected.candidates[0].reaVersion, '6.8.0')
+  assert.equal(detected.candidates[0].reaVersion, '6.9.0')
   assert.equal(detected.candidates[1].usable, false)
 })
 
@@ -71,7 +71,7 @@ test('adoption re-validates the exact entry and refuses anything else', async ()
   const base = await mkdtemp(join(tmpdir(), 'reakit-existing-'))
   const { dir, entry } = await install({ root: base })
   const adopted = await verifyAdoption({ nodePath: process.execPath, reaEntry: entry, nodeVersion: 'v26.13.0' })
-  assert.equal(adopted.reaVersion, '6.8.0')
+  assert.equal(adopted.reaVersion, '6.9.0')
   await assert.rejects(verifyAdoption({ nodePath: process.execPath, reaEntry: join(dir, 'package.json'), nodeVersion: 'v26.13.0' }), /scripts\/rea\.mjs/)
   await assert.rejects(verifyAdoption({ nodePath: process.execPath, reaEntry: join(base, 'missing.mjs'), nodeVersion: 'v26.13.0' }), /does not exist/)
   await assert.rejects(verifyAdoption({ nodePath: '', reaEntry: entry, nodeVersion: 'v26.13.0' }), /Both nodePath and reaEntry/)
@@ -103,7 +103,7 @@ test('the managed Node is offered first and the declared range is read from the 
   const { entry } = await install({ root: base, range: '>=20.0.0' })
   const { range, reaVersion } = await requiredNodeRange(entry)
   assert.equal(range, '>=20.0.0')
-  assert.equal(reaVersion, '6.8.0')
+  assert.equal(reaVersion, '6.9.0')
   const managed = { nodePath: '/managed/runtime/bin/node', nodeVersion: 'v99.0.0' }
   const nodes = await detectNodes({ nodePath: process.execPath, env: { PATH: '' }, home: '/nonexistent-home', managed })
   assert.equal(nodes[0].nodePath, managed.nodePath)

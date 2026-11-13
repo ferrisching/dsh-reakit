@@ -15,8 +15,9 @@ const unavailable = (code = 'not_configured', diagnostics = {}) => failure({ cod
 const exec = name => ({ name: reaPublicToolName('rea', name), arguments: { SECRET } })
 
 test('reviewed catalog and public naming isolate adjacent and long namespaces', () => {
-  assert.equal(REA_TOOL_NAMES.length, 229)
-  assert.equal(new Set(REA_TOOL_NAMES).size, 229)
+  // REA 6.9.0 publishes 255 tools; the list must stay duplicate-free.
+  assert.equal(REA_TOOL_NAMES.length, 255)
+  assert.equal(new Set(REA_TOOL_NAMES).size, 255)
   assert.ok(Object.isFrozen(REA_TOOL_NAMES))
   assert.equal(reaPublicToolName('rea', 'open_binary'), 'mcp__rea__open_binary')
   const long = reaPublicToolName('x'.repeat(32), 'inspect_managed_native_boundaries')

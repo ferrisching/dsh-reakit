@@ -9,14 +9,14 @@ import { REA_NODE_RANGE as RANGE } from '../lib/config.js'
 import { buildMcpConfig, REA_NODE_RANGE } from '../lib/config.js'
 
 const CONFIRM = { confirmed: true, exported: true }
-const candidate = { rea: { version: '6.9.0' }, node: { version: '26.13.0' } }
+const candidate = { rea: { version: '6.10.0' }, node: { version: '26.13.0' } }
 const quiet = () => ({ results: [{ result: { isError: false, value: { structuredContent: { result: { open: false, cleanup_pending: false, analysis_run: null, analysis_activity: { status: 'not_observed', providers: [] } } } } } }] })
 
 async function fixture(t, overrides = {}) {
   const prefix = join(tmpdir(), 'dsh-reakit-manager-test-'), root = await mkdtemp(prefix)
   t.after(async () => { assert.ok(resolve(root).startsWith(resolve(prefix))); await rm(root, { recursive: true, force: true }) })
   let current = { enabled: true, serverName: 'rea', runtimeDir: root, nodePath: '', reaEntry: '', managedReaVersion: '', managedNodeRange: '', env: { KEEP: 'unchanged' }, showComposerToggle: true, ...overrides.settings }
-  let runtime = { phase: 'ready', reaVersion: '6.8.0', nodeVersion: 'v24.22.1', nodeRange: REA_NODE_RANGE }
+  let runtime = { phase: 'ready', reaVersion: '6.9.0', nodeVersion: 'v24.22.1', nodeRange: REA_NODE_RANGE }
   const writes = [], calls = { check: 0, prepare: 0, sessions: 0 }
   let failWrites = 0, applyThenFail = false, sessionResult = quiet()
   const configuration = {
@@ -26,7 +26,7 @@ async function fixture(t, overrides = {}) {
       for (const key of ['nodePath', 'reaEntry', 'managedReaVersion', 'managedNodeRange']) assert.equal((current[key] || ''), (expected[key] || ''))
       if (failWrites-- > 0) throw new Error('edit rejected before applying')
       current = { ...current, ...next }
-      runtime = next.managedReaVersion ? { phase: 'ready', reaVersion: next.managedReaVersion, nodeVersion: 'v26.13.0', nodeRange: next.managedNodeRange } : { phase: 'ready', reaVersion: '6.8.0', nodeVersion: 'v24.22.1', nodeRange: REA_NODE_RANGE }
+      runtime = next.managedReaVersion ? { phase: 'ready', reaVersion: next.managedReaVersion, nodeVersion: 'v26.13.0', nodeRange: next.managedNodeRange } : { phase: 'ready', reaVersion: '6.9.0', nodeVersion: 'v24.22.1', nodeRange: REA_NODE_RANGE }
       if (applyThenFail) { applyThenFail = false; throw new Error('response lost after accepted edit') }
       return { saved: true }
     },
@@ -39,7 +39,7 @@ async function fixture(t, overrides = {}) {
     prepare: async (_candidate, settings) => {
       calls.prepare++
       const nodePath = join(settings.runtimeDir, 'new', 'node'), reaEntry = join(settings.runtimeDir, 'new', 'engine', 'node_modules', 'rea-agents', 'scripts', 'rea.mjs')
-      return { reaVersion: '6.9.0', nodeVersion: 'v26.13.0', nodeRange: '>=24.22.1', config: buildMcpConfig({ nodePath, reaEntry }) }
+      return { reaVersion: '6.10.0', nodeVersion: 'v26.13.0', nodeRange: '>=24.22.1', config: buildMcpConfig({ nodePath, reaEntry }) }
     },
   })
   await manager.refresh()
@@ -79,7 +79,7 @@ test('a lost response after accepted edit is refreshed, not replayed', async t =
   f.applyThenFail()
   await assert.rejects(f.manager.prepareSwitch(token, CONFIRM), /response lost/)
   assert.equal(f.writes.length, 1)
-  assert.equal(f.getCurrent().managedReaVersion, '6.9.0')
+  assert.equal(f.getCurrent().managedReaVersion, '6.10.0')
   assert.equal(f.manager.status().transition.state, 'ready')
 })
 
@@ -103,9 +103,9 @@ test('managed parts resolve when the record carries no runtimeDir', async () => 
   // Transition records only store the two paths, so the manager's root must be used.
   const parts = await managedParts({
     nodePath: `${root}/node/darwin-arm64-24.22.1-abc/bin/node`,
-    reaEntry: `${root}/engine/rea6.8.0-abc/node_modules/rea-agents/scripts/rea.mjs`,
+    reaEntry: `${root}/engine/rea6.9.0-abc/node_modules/rea-agents/scripts/rea.mjs`,
   }, root)
-  assert.deepEqual(parts.parts.sort(), [`${root}/engine/rea6.8.0-abc`, `${root}/node/darwin-arm64-24.22.1-abc`].sort())
+  assert.deepEqual(parts.parts.sort(), [`${root}/engine/rea6.9.0-abc`, `${root}/node/darwin-arm64-24.22.1-abc`].sort())
 })
 
 test('managed parts cover split and legacy layouts', async () => {
@@ -114,11 +114,11 @@ test('managed parts cover split and legacy layouts', async () => {
   const split = await managedParts({
     runtimeDir: root,
     nodePath: `${root}/node/darwin-arm64-26.13.0-abc/bin/node`,
-    reaEntry: `${root}/engine/rea6.8.0-abc/node_modules/rea-agents/scripts/rea.mjs`,
+    reaEntry: `${root}/engine/rea6.9.0-abc/node_modules/rea-agents/scripts/rea.mjs`,
   })
-  assert.deepEqual(split.parts.sort(), [`${root}/engine/rea6.8.0-abc`, `${root}/node/darwin-arm64-26.13.0-abc`].sort())
-  const legacy = await managedParts({ runtimeDir: root, nodePath: `${root}/node-26.13.0-rea-6.8.0/engine/node_modules/rea-agents/scripts/rea.mjs`, reaEntry: `${root}/node-26.13.0-rea-6.8.0/engine/node_modules/rea-agents/scripts/rea.mjs` })
-  assert.deepEqual(legacy.parts, [`${root}/node-26.13.0-rea-6.8.0`])
+  assert.deepEqual(split.parts.sort(), [`${root}/engine/rea6.9.0-abc`, `${root}/node/darwin-arm64-26.13.0-abc`].sort())
+  const legacy = await managedParts({ runtimeDir: root, nodePath: `${root}/node-26.13.0-rea-6.9.0/engine/node_modules/rea-agents/scripts/rea.mjs`, reaEntry: `${root}/node-26.13.0-rea-6.9.0/engine/node_modules/rea-agents/scripts/rea.mjs` })
+  assert.deepEqual(legacy.parts, [`${root}/node-26.13.0-rea-6.9.0`])
   assert.deepEqual((await managedParts({ runtimeDir: root, nodePath: '', reaEntry: '' })).parts, [])
 })
 
@@ -129,8 +129,8 @@ test('a pair inside the managed root may be replaced by a version switch', async
   const root = f.root
   const node = join(root, 'node', 'darwin-arm64-26.13.0-abc', 'bin', 'node')
   await mkdir(dirname(node), { recursive: true })
-  f.setCurrent({ enabled: true, runtimeDir: root, nodePath: node, reaEntry: join(root, 'engine', 'rea-x', 'rea.mjs'), managedReaVersion: '6.8.0', managedNodeRange: RANGE, env: {} })
-  f.setRuntime({ phase: 'ready', reaVersion: '6.8.0', nodeVersion: 'v26.13.0', nodeRange: RANGE })
+  f.setCurrent({ enabled: true, runtimeDir: root, nodePath: node, reaEntry: join(root, 'engine', 'rea-x', 'rea.mjs'), managedReaVersion: '6.9.0', managedNodeRange: RANGE, env: {} })
+  f.setRuntime({ phase: 'ready', reaVersion: '6.9.0', nodeVersion: 'v26.13.0', nodeRange: RANGE })
   const token = (await f.manager.checkUpdates()).token
   await f.manager.prepareSwitch(token, CONFIRM)
   assert.equal(f.writes.length > 0, true, 'the switch was allowed to write the new pair')

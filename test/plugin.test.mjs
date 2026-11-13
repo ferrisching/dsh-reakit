@@ -18,7 +18,7 @@ test('plugin identity and safe defaults', () => {
   assert.equal(Config({}).outputSchemaProfile, 'off')
 })
 
-test('published REA 6.8.0 rejects unsupported compact output advertisements', () => {
+test('published REA 6.9.0 rejects unsupported compact output advertisements', () => {
   assert.throws(() => Config({ outputSchemaProfile: 'compact' }))
   assert.equal(Config({ outputSchemaProfile: 'full' }).outputSchemaProfile, 'full')
 })
@@ -30,8 +30,8 @@ test('disabled activation neither preflights nor connects', async () => {
 
 test('dynamic managed metadata must be complete and accompany explicit runtime paths', async () => {
   const apply = createApply({ inspect: () => { throw new Error('must not inspect incomplete dynamic settings') } })
-  await assert.rejects(apply({}, { enabled: true, nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs', managedReaVersion: '6.9.0' }), /managedReaVersion/)
-  await assert.rejects(apply({}, { enabled: true, managedReaVersion: '6.9.0', managedNodeRange: '>=24.22.1' }), /managedReaVersion/)
+  await assert.rejects(apply({}, { enabled: true, nodePath: '/node', reaEntry: '/rea/scripts/rea.mjs', managedReaVersion: '6.10.0' }), /managedReaVersion/)
+  await assert.rejects(apply({}, { enabled: true, managedReaVersion: '6.10.0', managedNodeRange: '>=24.22.1' }), /managedReaVersion/)
 })
 
 test('wrapper delegates validated launch to official bridge on the same owned context', async () => {
@@ -73,7 +73,7 @@ test('zero-config activation prepares the runtime without manual paths', async (
   let hooks
   const apply = createApply({
     register: async (_ctx, registered) => { hooks = registered },
-    prepare: async (config) => { preparations++; assert.equal(config.nodePath, ''); return { nodeVersion: 'v24.22.1', reaVersion: '6.8.0', config: buildMcpConfig(settings) } },
+    prepare: async (config) => { preparations++; assert.equal(config.nodePath, ''); return { nodeVersion: 'v24.22.1', reaVersion: '6.9.0', config: buildMcpConfig(settings) } },
     bridge: { Config: realBridge.Config, apply: async () => {} },
   })
   await apply({}, { nodePreference: 'managed', enabled: true })
