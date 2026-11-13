@@ -754,7 +754,8 @@ test('the tool-scope block renders each family with its scope', async () => {
       { id: 'session', tools: 24, bytes: 36055, purpose: '会话与证据：证据导入导出、函数比较' },
     ],
   }
-  const props = { rpc: async () => scope, t: key => String(key), configurationWritable: true, onChanged: () => {} }
+  const calls = []
+  const props = { rpc: async (method, args) => { calls.push({ method, args }); return scope }, t: key => String(key), configurationWritable: true, onChanged: () => {} }
   // first render resolves the data, the second one draws it
   cursor = 0; effects.length = 0
   exported.__testing.ToolScope(props)
@@ -767,4 +768,9 @@ test('the tool-scope block renders each family with its scope', async () => {
   assert.match(text, /原生二进制与调试/)
   assert.match(text, /会话与证据/)
   assert.match(text, /data-rea-tool-scope-size/)
+  const clear = one(tree, node => node.props?.['data-rea-tool-scope-clear'])
+  clear.props.onClick()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(calls.at(-1).method, 'setToolScope')
+  assert.deepEqual(plain(calls.at(-1).args), { families: [] }, 'restore advertises every family, not a placeholder id')
 })

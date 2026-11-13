@@ -659,7 +659,7 @@ window.__ModuleLoader__.load({
             }),
           ),
           data.selected.length
-            ? h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { toggle('__none__') }, 'data-rea-tool-scope-clear': true }, t('恢复全部工具'))
+            ? h('button', { type: 'button', disabled: busy || !props.configurationWritable, onClick: function () { clear() }, 'data-rea-tool-scope-clear': true }, t('恢复全部工具'))
             : null,
           error ? h('p', { role: 'alert', style: { color: 'var(--dsw-alias-state-error-primary, inherit)', fontSize: '12px' } }, error) : null,
         ),
