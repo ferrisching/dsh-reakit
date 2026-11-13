@@ -92,7 +92,7 @@ Open the plugins page → **Add plugin** → enter `dsh-reakit` → install, the
 Or with the DSH CLI:
 
 ```bash
-dsh plugin --profile desktop add dsh-reakit@0.1.0
+dsh plugin --profile desktop add dsh-reakit@0.1.6
 ```
 
 Replace `--profile` with your own profile (usually `desktop`), then restart DSH. The first start needs network access while the pinned runtime is provisioned; the download is several hundred MB and reused afterwards.
@@ -100,8 +100,8 @@ Replace `--profile` with your own profile (usually `desktop`), then restart DSH.
 ### Install from a tarball
 
 ```bash
-npm pack dsh-reakit@0.1.0          # or download dsh-reakit-0.1.0.tgz
-dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
+npm pack dsh-reakit@0.1.6          # or download dsh-reakit-0.1.6.tgz
+dsh plugin --profile desktop add ./dsh-reakit-0.1.6.tgz
 ```
 
 ### Install from source
@@ -112,7 +112,7 @@ cd dsh-reakit
 npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 npm pack --ignore-scripts
-dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
+dsh plugin --profile desktop add ./dsh-reakit-0.1.6.tgz
 ```
 
 ### Requirements

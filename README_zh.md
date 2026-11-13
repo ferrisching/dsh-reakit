@@ -89,7 +89,7 @@ schema 下约 353 KB）。设置 → REA 的总开关按 **关 → 手动 → �
 或使用 DSH 命令行：
 
 ```bash
-dsh plugin --profile desktop add dsh-reakit@0.1.0
+dsh plugin --profile desktop add dsh-reakit@0.1.6
 ```
 
 把 `--profile` 换成自己的 profile（桌面端通常是 `desktop`），随后重启 DSH。首次启动需要联网准备固定运行时，体积数百 MB，之后直接复用。
@@ -97,8 +97,8 @@ dsh plugin --profile desktop add dsh-reakit@0.1.0
 ### 从 tarball 安装
 
 ```bash
-npm pack dsh-reakit@0.1.0          # 或直接下载 dsh-reakit-0.1.0.tgz
-dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
+npm pack dsh-reakit@0.1.6          # 或直接下载 dsh-reakit-0.1.6.tgz
+dsh plugin --profile desktop add ./dsh-reakit-0.1.6.tgz
 ```
 
 ### 从源码安装
@@ -109,7 +109,7 @@ cd dsh-reakit
 npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 npm pack --ignore-scripts
-dsh plugin --profile desktop add ./dsh-reakit-0.1.0.tgz
+dsh plugin --profile desktop add ./dsh-reakit-0.1.6.tgz
 ```
 
 ### 环境要求
